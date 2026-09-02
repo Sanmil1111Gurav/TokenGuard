@@ -110,10 +110,14 @@ def process_graph(graph_path: str, hide_isolated: bool = False) -> dict[str, Any
         cls = raw_node.get("classes", [])
         imps = raw_node.get("imports", [])
 
+        node_id_std = node_id.replace("\\", "/").strip()
+        if node_id_std.startswith("./"):
+            node_id_std = node_id_std[2:]
+
         lock_status = "unlocked"
         locked_funcs = []
-        if node_id in manager.state.locked_features:
-            feat = manager.state.locked_features[node_id]
+        feat = manager.state.locked_features.get(node_id_std) or manager.state.locked_features.get(node_id)
+        if feat:
             lock_status = "frozen" if feat.lock_entire_file else "partially_frozen"
             locked_funcs = feat.locked_functions
 

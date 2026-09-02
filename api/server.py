@@ -191,6 +191,22 @@ async def api_lock_file(req: LockRequest) -> JSONResponse:
     feature = manager.state.locked_features.get(req.file_path)
     return JSONResponse(content={"success": True, "locked_feature": feature.__dict__ if feature else None})
 
+class BatchLockRequest(BaseModel):
+    file_paths: List[str]
+    reason: str = "Batch freeze via UI"
+
+class BatchUnlockRequest(BaseModel):
+    file_paths: List[str]
+
+@app.post("/api/ledger/lock_batch")
+async def api_lock_batch(req: BatchLockRequest) -> JSONResponse:
+    manager = _get_ledger_manager()
+    success_files = []
+    for fp in req.file_paths:
+        if manager.lock_file(fp, req.reason):
+            success_files.append(fp)
+    return JSONResponse(content={"success": True, "locked_files": success_files, "count": len(success_files)})
+
 @app.post("/api/ledger/unlock")
 async def api_unlock_file(req: UnlockRequest) -> JSONResponse:
     manager = _get_ledger_manager()
@@ -198,6 +214,15 @@ async def api_unlock_file(req: UnlockRequest) -> JSONResponse:
     if not success:
         raise HTTPException(status_code=400, detail="Failed to unlock file (not locked)")
     return JSONResponse(content={"success": True})
+
+@app.post("/api/ledger/unlock_batch")
+async def api_unlock_batch(req: BatchUnlockRequest) -> JSONResponse:
+    manager = _get_ledger_manager()
+    success_files = []
+    for fp in req.file_paths:
+        if manager.unlock_file(fp):
+            success_files.append(fp)
+    return JSONResponse(content={"success": True, "unlocked_files": success_files, "count": len(success_files)})
 
 @app.get("/api/ledger")
 async def api_get_ledger() -> JSONResponse:

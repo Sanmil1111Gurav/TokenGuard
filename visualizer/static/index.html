@@ -254,6 +254,19 @@
     .glow-ring.unlocked { stroke: #2ecc71 !important; stroke-dasharray: none; transition: opacity 3s; }
     @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
 
+    /* ── Frozen node styling (Black & White + Fixed) ───────────── */
+    .node-pill.is-frozen {
+      filter: grayscale(100%) brightness(0.88) contrast(1.15);
+    }
+    .node-pill.is-frozen rect:first-of-type {
+      fill: #18181b !important;
+      stroke: #71717a !important;
+      stroke-width: 1.5px !important;
+    }
+    .node-pill.is-frozen text {
+      fill: #e4e4e7 !important;
+    }
+
     /* ── Loading ───────────────────────────────────────────────── */
     #loading {
       position:fixed; inset:0; background:var(--bg); display:flex; flex-direction:column;
@@ -263,6 +276,71 @@
     #loading h2 { color:var(--text); font-size:1.1rem; }
     #loading p  { color:var(--text-muted); font-size:.82rem; }
     @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* ── Freeze/Unfreeze Modal ─────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(13, 15, 24, 0.75); backdrop-filter: blur(6px);
+      z-index: 999; display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .modal-card {
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: 14px; width: 480px; max-width: 90vw; max-height: 80vh;
+      display: flex; flex-direction: column; box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+      overflow: hidden; animation: modalPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes modalPop {
+      from { transform: scale(0.94); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .modal-header {
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-header h3 { margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text); }
+    .modal-close {
+      background: transparent; border: none; color: var(--text-dim); font-size: 1.1rem;
+      cursor: pointer; padding: 4px; border-radius: 4px; transition: color 0.15s;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal-body { padding: 16px 20px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+    .modal-subtitle { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
+    .modal-actions-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px 14px; font-size: 0.82rem; font-weight: 600; color: var(--text);
+    }
+    .modal-file-list {
+      display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow-y: auto;
+      padding-right: 4px; margin-top: 4px;
+    }
+    .modal-file-list::-webkit-scrollbar { width: 4px; }
+    .modal-file-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .modal-file-item {
+      display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .modal-file-item:hover { border-color: var(--accent); background: rgba(59,130,246,0.06); }
+    .modal-file-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+    .modal-file-name { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text); flex: 1; word-break: break-all; }
+    .modal-file-badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; font-weight: 600; }
+    .modal-footer {
+      padding: 14px 20px; border-top: 1px solid var(--border);
+      display: flex; gap: 10px; justify-content: flex-end; background: var(--surface);
+    }
+    .modal-btn {
+      padding: 8px 16px; border-radius: 8px; font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; border: 1px solid transparent; transition: all 0.15s;
+    }
+    .modal-btn.cancel { background: transparent; border-color: var(--border); color: var(--text-muted); }
+    .modal-btn.cancel:hover { color: var(--text); border-color: var(--border2); }
+    .modal-btn.confirm { background: #3b82f6; color: #fff; }
+    .modal-btn.confirm:hover { background: #2563eb; }
+    .modal-btn.unfreeze { background: #ef4444; color: #fff; }
+    .modal-btn.unfreeze:hover { background: #dc2626; }
   </style>
 </head>
 <body>
@@ -295,8 +373,8 @@
 
     <div id="lock-filters" style="display:flex; gap:6px; align-items:center; margin-left: 10px;">
       <div class="filter-pill active" data-lock="all" onclick="setLockFilter(this)">Show All</div>
-      <div class="filter-pill" data-lock="locked" onclick="setLockFilter(this)">🔒 Locked Only</div>
-      <div class="filter-pill" data-lock="unlocked" onclick="setLockFilter(this)">Unlocked Only</div>
+      <div class="filter-pill" data-lock="freeze" onclick="setLockFilter(this)">❄️ Freeze Files</div>
+      <div class="filter-pill" data-lock="unfreeze" onclick="setLockFilter(this)">🔓 Unfreeze Files</div>
     </div>
 
     <div id="hdr-right">
@@ -378,7 +456,7 @@
         <button class="pfooter-btn" id="pf-end"   onclick="setPathNode('end')">■ Set as End</button>
       </div>
       <div id="panel-lock-footer" style="padding:0 16px 12px; display:flex; gap:8px; flex-shrink:0;">
-        <button class="pfooter-btn" id="pf-lock" style="color:var(--text); border-color:var(--border);" onclick="toggleLock()">🔒 Lock / Unlock</button>
+        <button class="pfooter-btn" id="pf-lock" style="color:var(--text); border-color:var(--border);" onclick="toggleLock()">❄️ Freeze / Unfreeze</button>
       </div>
     </div>
 
@@ -395,6 +473,31 @@
 </div><!-- /app -->
 
 <div id="tooltip"></div>
+
+<!-- Freeze / Unfreeze Interactive Selection Modal -->
+<div id="freeze-modal" class="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 id="modal-title">❄️ Freeze Files</h3>
+      <button class="modal-close" onclick="closeFreezeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-subtitle" id="modal-subtitle">Select files to freeze into the ledger:</div>
+      <div class="modal-actions-bar">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none;">
+          <input type="checkbox" id="modal-select-all" onchange="toggleSelectAllModal(this)" />
+          <span id="modal-select-all-label">Freeze All Files</span>
+        </label>
+        <span id="modal-selected-count" style="font-size:0.75rem; color:var(--text-dim);">0 selected</span>
+      </div>
+      <div class="modal-file-list" id="modal-file-list"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn cancel" onclick="closeFreezeModal()">Cancel</button>
+      <button class="modal-btn confirm" id="modal-confirm-btn" onclick="submitBatchModal()">Confirm</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ═══════════════════════════════════════════════════════════════
@@ -557,7 +660,15 @@ function addArrow(defs, id, color, refX) {
 // ═══════════════════════════════════════════════════════════════
 function render(W, H) {
   // Deep-copy nodes & links (D3 mutates them)
-  const nodes = G.nodes.map(d => ({...d, pw: pillW(d.label)}));
+  const nodes = G.nodes.map(d => {
+    const isFrozen = d.lock_status === 'frozen' || d.lock_status === 'partially_frozen';
+    return {
+      ...d,
+      pw: pillW(d.label),
+      fx: isFrozen ? (d.x != null ? d.x : undefined) : null,
+      fy: isFrozen ? (d.y != null ? d.y : undefined) : null
+    };
+  });
   const links = G.links.map(l => ({...l}));
 
   // ── Simulation ────────────────────────────────────────────────
@@ -591,13 +702,25 @@ function render(W, H) {
   const nodeG = svgRoot.append('g').attr('class','nodes')
     .selectAll('g').data(nodes, d=>d.id)
     .join('g')
-    .attr('class','node-pill')
+    .attr('class', d => {
+      const isFrozen = d.lock_status === 'frozen' || d.lock_status === 'partially_frozen';
+      return `node-pill ${isFrozen ? 'is-frozen' : ''}`;
+    })
     .attr('id', d => 'np-' + safeId(d.id))
     .call(d3.drag()
       .on('start', (e,d) => { if(!e.active) sim.alphaTarget(.3).restart(); d.fx=d.x; d.fy=d.y; })
       .on('drag',  (e,d) => { d.fx=e.x; d.fy=e.y; })
-      .on('end',   (e,d) => { if(!e.active) sim.alphaTarget(0); d.fx=null; d.fy=null; })
+      .on('end',   (e,d) => {
+        if(!e.active) sim.alphaTarget(0);
+        const isFrozen = d.lock_status === 'frozen' || d.lock_status === 'partially_frozen';
+        if (!isFrozen) {
+          d.fx = null;
+          d.fy = null;
+        }
+      })
     );
+
+  const isFrz = d => d.lock_status === 'frozen' || d.lock_status === 'partially_frozen';
 
   // Background pill
   nodeG.append('rect')
@@ -606,9 +729,9 @@ function render(W, H) {
     .attr('x', d => -d.pw/2)
     .attr('y', -PILL_H/2)
     .attr('rx', 8)
-    .attr('fill',   d => folderColor(d.group) + '18')
-    .attr('stroke', d => folderColor(d.group))
-    .attr('stroke-width', 1.2)
+    .attr('fill',   d => isFrz(d) ? '#18181b' : folderColor(d.group) + '18')
+    .attr('stroke', d => isFrz(d) ? '#71717a' : folderColor(d.group))
+    .attr('stroke-width', d => isFrz(d) ? 1.8 : 1.2)
     .on('mouseover', onHover)
     .on('mousemove', onMove)
     .on('mouseout',  onOut)
@@ -621,8 +744,8 @@ function render(W, H) {
     .attr('x', d => -d.pw/2 + 4)
     .attr('y', -PILL_H/2 + 3)
     .attr('rx', 2)
-    .attr('fill', d => folderColor(d.group))
-    .attr('fill-opacity', 0.85)
+    .attr('fill', d => isFrz(d) ? '#71717a' : folderColor(d.group))
+    .attr('fill-opacity', d => isFrz(d) ? 0.6 : 0.85)
     .attr('pointer-events','none');
 
   // Filename text
@@ -633,8 +756,8 @@ function render(W, H) {
     .attr('text-anchor','middle')
     .attr('font-size', 11)
     .attr('font-family','Inter,system-ui,sans-serif')
-    .attr('font-weight', 500)
-    .attr('fill', d => folderColor(d.group))
+    .attr('font-weight', d => isFrz(d) ? 600 : 500)
+    .attr('fill', d => isFrz(d) ? '#ffffff' : folderColor(d.group))
     .attr('pointer-events','none')
     .text(d => d.label);
 
@@ -645,7 +768,7 @@ function render(W, H) {
     .attr('x', d => d.pw/2 - 22)
     .attr('y', -PILL_H/2 - 6)
     .attr('rx', 4)
-    .attr('fill', d => folderColor(d.group))
+    .attr('fill', d => isFrz(d) ? '#3f3f46' : folderColor(d.group))
     .attr('fill-opacity', 0.85)
     .attr('pointer-events','none');
 
@@ -659,12 +782,12 @@ function render(W, H) {
     .attr('font-size', 9)
     .attr('font-family','Inter,monospace')
     .attr('font-weight',700)
-    .attr('fill','#0d0f18')
+    .attr('fill', d => isFrz(d) ? '#ffffff' : '#0d0f18')
     .attr('pointer-events','none')
     .text(d => d.functions.length);
 
   // Padlock icon
-  nodeG.filter(d => d.lock_status === 'frozen' || d.lock_status === 'partially_frozen' || d.lock_status === 'tampered')
+  nodeG.filter(d => isFrz(d) || d.lock_status === 'tampered')
     .append('text')
     .attr('x', d => -d.pw/2 + 10)
     .attr('y', 0)
@@ -687,6 +810,15 @@ function render(W, H) {
 
   // ── Tick ─────────────────────────────────────────────────────
   sim.on('tick', () => {
+    // Pin physics for frozen nodes so they stop moving
+    nodes.forEach(d => {
+      const isFrozen = d.lock_status === 'frozen' || d.lock_status === 'partially_frozen';
+      if (isFrozen) {
+        if (d.fx == null && d.x != null) d.fx = d.x;
+        if (d.fy == null && d.y != null) d.fy = d.y;
+      }
+    });
+
     link
       .attr('x1', d => d.source.x)
       .attr('y1', d => d.source.y)
@@ -837,6 +969,7 @@ function deselect() {
 //  PANEL
 // ═══════════════════════════════════════════════════════════════
 function openPanel(d) {
+  selId = d.id;
   const col = folderColor(d.group);
   document.getElementById('panel').classList.add('open');
   document.getElementById('panel-folder-dot').style.background = col;
@@ -853,6 +986,25 @@ function openPanel(d) {
   chips('pnl-imp','cnt-imp', d.imports,   'imp');
   chips('pnl-iby','cnt-iby', d.imported_by||[], 'iby', true);
   document.getElementById('src-preview').textContent = '';
+
+  updateFreezeUI(d);
+}
+
+function updateFreezeUI(d) {
+  const btn = document.getElementById('pf-lock');
+  if (!btn) return;
+  const isFrozen = d.lock_status === 'frozen' || d.lock_status === 'partially_frozen';
+  if (isFrozen) {
+    btn.innerHTML = '🔓 Unfreeze File';
+    btn.style.borderColor = '#ef4444';
+    btn.style.color = '#ef4444';
+    btn.style.background = 'rgba(239, 68, 68, 0.15)';
+  } else {
+    btn.innerHTML = '❄️ Freeze File';
+    btn.style.borderColor = '#3b82f6';
+    btn.style.color = '#60a5fa';
+    btn.style.background = 'rgba(59, 130, 246, 0.15)';
+  }
 }
 
 function updatePanel(detail) {
@@ -903,10 +1055,160 @@ function setFolder(pill) {
 }
 
 function setLockFilter(pill) {
-  document.querySelectorAll('#lock-filters .filter-pill').forEach(p=>p.classList.remove('active'));
-  pill.classList.add('active');
-  lockFlt = pill.dataset.lock;
-  applyFilter();
+  const lockType = pill.dataset.lock;
+  if (lockType === 'freeze') {
+    openBatchModal('freeze');
+  } else if (lockType === 'unfreeze') {
+    openBatchModal('unfreeze');
+  } else {
+    document.querySelectorAll('#lock-filters .filter-pill').forEach(p=>p.classList.remove('active'));
+    pill.classList.add('active');
+    lockFlt = 'all';
+    applyFilter();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  INTERACTIVE BATCH FREEZE / UNFREEZE MODAL
+// ═══════════════════════════════════════════════════════════════
+let currentBatchMode = 'freeze';
+
+function openBatchModal(mode) {
+  currentBatchMode = mode;
+  const modal = document.getElementById('freeze-modal');
+  const title = document.getElementById('modal-title');
+  const subtitle = document.getElementById('modal-subtitle');
+  const selectAllLabel = document.getElementById('modal-select-all-label');
+  const confirmBtn = document.getElementById('modal-confirm-btn');
+  const fileList = document.getElementById('modal-file-list');
+  const selectAll = document.getElementById('modal-select-all');
+
+  selectAll.checked = false;
+  selectAll.indeterminate = false;
+
+  let targetNodes = [];
+  if (mode === 'freeze') {
+    title.textContent = '❄️ Freeze Files';
+    subtitle.textContent = 'Select unfrozen files to freeze into the ledger:';
+    selectAllLabel.textContent = 'Freeze All Files';
+    confirmBtn.textContent = '❄️ Freeze Selected Files';
+    confirmBtn.className = 'modal-btn confirm';
+    targetNodes = G.nodes.filter(n => n.lock_status !== 'frozen' && n.lock_status !== 'partially_frozen');
+  } else {
+    title.textContent = '🔓 Unfreeze Files';
+    subtitle.textContent = 'Select frozen files to unfreeze from the ledger:';
+    selectAllLabel.textContent = 'Unfreeze All Files';
+    confirmBtn.textContent = '🔓 Unfreeze Selected Files';
+    confirmBtn.className = 'modal-btn confirm unfreeze';
+    targetNodes = G.nodes.filter(n => n.lock_status === 'frozen' || n.lock_status === 'partially_frozen');
+  }
+
+  if (targetNodes.length === 0) {
+    fileList.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px; font-size:0.85rem;">
+      ${mode === 'freeze' ? '✅ All files in this project are already frozen!' : 'ℹ️ No files are currently frozen.'}
+    </div>`;
+    document.getElementById('modal-selected-count').textContent = '0 files';
+  } else {
+    fileList.innerHTML = targetNodes.map(n => `
+      <label class="modal-file-item">
+        <input type="checkbox" class="modal-file-checkbox" value="${n.id}" onchange="updateModalCount()" />
+        <span class="modal-file-name">${n.id}</span>
+        <span class="modal-file-badge" style="background:${folderColor(n.group)}22; color:${folderColor(n.group)}; border:1px solid ${folderColor(n.group)}44">${n.group}</span>
+      </label>
+    `).join('');
+    updateModalCount();
+  }
+
+  modal.classList.add('open');
+}
+
+function closeFreezeModal() {
+  document.getElementById('freeze-modal').classList.remove('open');
+}
+
+function toggleSelectAllModal(masterCb) {
+  const checkboxes = document.querySelectorAll('.modal-file-checkbox');
+  checkboxes.forEach(cb => cb.checked = masterCb.checked);
+  updateModalCount();
+}
+
+function updateModalCount() {
+  const allCbs = document.querySelectorAll('.modal-file-checkbox');
+  const checkedCbs = document.querySelectorAll('.modal-file-checkbox:checked');
+  const selectAll = document.getElementById('modal-select-all');
+  
+  if (allCbs.length > 0 && checkedCbs.length === allCbs.length) {
+    selectAll.checked = true;
+    selectAll.indeterminate = false;
+  } else if (checkedCbs.length > 0) {
+    selectAll.checked = false;
+    selectAll.indeterminate = true;
+  } else {
+    selectAll.checked = false;
+    selectAll.indeterminate = false;
+  }
+  
+  document.getElementById('modal-selected-count').textContent = `${checkedCbs.length} of ${allCbs.length} selected`;
+}
+
+async function submitBatchModal() {
+  const checkboxes = document.querySelectorAll('.modal-file-checkbox:checked');
+  if (!checkboxes || checkboxes.length === 0) {
+    alert('Please select at least one file to proceed.');
+    return;
+  }
+  const selectedFiles = Array.from(checkboxes).map(cb => cb.value);
+
+  closeFreezeModal();
+
+  if (currentBatchMode === 'freeze') {
+    try {
+      await fetch('/api/ledger/lock_batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_paths: selectedFiles, reason: "Frozen via Visualizer UI" })
+      });
+    } catch (err) {
+      console.error('Error in batch freeze:', err);
+    }
+    await refreshGraphState();
+  } else {
+    try {
+      await fetch('/api/ledger/unlock_batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_paths: selectedFiles })
+      });
+    } catch (err) {
+      console.error('Error in batch unfreeze:', err);
+    }
+    await refreshGraphState();
+  }
+}
+
+async function refreshGraphState() {
+  try {
+    const r = await fetch('/api/graph');
+    if (!r.ok) return;
+    G = await r.json();
+
+    buildGraph();
+
+    // Reset lock filter to Show All so all nodes remain fully visible
+    document.querySelectorAll('#lock-filters .filter-pill').forEach(p=>p.classList.remove('active'));
+    const allPill = document.querySelector('#lock-filters .filter-pill[data-lock="all"]');
+    if (allPill) allPill.classList.add('active');
+    lockFlt = 'all';
+
+    applyFilter();
+
+    if (selId) {
+      const currentSelNode = G.nodes.find(n => n.id === selId);
+      if (currentSelNode) updateFreezeUI(currentSelNode);
+    }
+  } catch (err) {
+    console.error('Failed to refresh graph state silently:', err);
+  }
 }
 
 function setFolderByName(name) {
@@ -1090,23 +1392,22 @@ async function toggleLock() {
   const url = isLocked ? '/api/ledger/unlock' : '/api/ledger/lock';
   const body = { file_path: selId };
   if (!isLocked) {
-      body.reason = prompt("Reason for locking this file:") || "User requested lock via UI";
+      body.reason = "Frozen via Visualizer UI";
   }
   
   try {
       const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
+          body: JSON.stringify({ file_path: selId, reason: body.reason })
       });
       if (res.ok) {
-          // Temporarily reload the entire page to fetch updated graph
-          window.location.reload();
+          await refreshGraphState();
       } else {
-          alert('Failed to toggle lock status');
+          console.error('Failed to toggle freeze status');
       }
   } catch (err) {
-      alert('Error toggling lock: ' + err);
+      console.error('Error toggling freeze: ' + err);
   }
 }
 

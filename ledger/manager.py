@@ -96,6 +96,11 @@ class LedgerManager:
             
         # Verify file exists in dependency_graph.json
         graph_path = os.path.join(self.project_root, settings.GRAPH_FILENAME)
+        if not os.path.exists(graph_path):
+            alt_path = os.path.join(self.project_root, "TokenGuard", settings.GRAPH_FILENAME)
+            if os.path.exists(alt_path):
+                graph_path = alt_path
+
         graph = load_graph(graph_path)
         if graph is None or not graph.has_node(file_path):
             logger.error(f"Cannot lock '{file_path}': File not found in dependency graph. Please run TokenGuard pipeline first.")

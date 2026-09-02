@@ -38,6 +38,12 @@ app = FastAPI(title="TokenGuard Visual API", version="1.0.0")
 _STATIC_DIR = Path(__file__).parent.parent / "visualizer" / "static"
 _GRAPH_PATH = _PROJECT_ROOT / settings.GRAPH_FILENAME
 
+def set_project(project_path: Path) -> None:
+    """Set the active project root dynamically."""
+    global _PROJECT_ROOT, _GRAPH_PATH
+    _PROJECT_ROOT = Path(project_path).resolve()
+    _GRAPH_PATH = _PROJECT_ROOT / settings.GRAPH_FILENAME
+
 
 def _get_graph_path() -> Path:
     """Return the graph file path, raising 503 if it doesn't exist yet."""
@@ -155,3 +161,68 @@ async def get_file_detail(path: str = Query(...)) -> JSONResponse:
         "summary": node_data.get("summary", ""),
         "source_preview": source_lines,
     })
+
+# ---------------------------------------------------------------------------
+# Ledger API
+# ---------------------------------------------------------------------------
+from pydantic import BaseModel
+from typing import List, Optional
+from ledger.manager import LedgerManager
+
+class LockRequest(BaseModel):
+    file_path: str
+    reason: str = "No reason provided"
+    functions: Optional[List[str]] = None
+    classes: Optional[List[str]] = None
+
+class UnlockRequest(BaseModel):
+    file_path: str
+    functions: Optional[List[str]] = None
+
+def _get_ledger_manager() -> LedgerManager:
+    return LedgerManager(str(_PROJECT_ROOT))
+
+@app.post("/api/ledger/lock")
+async def api_lock_file(req: LockRequest) -> JSONResponse:
+    manager = _get_ledger_manager()
+    success = manager.lock_file(req.file_path, req.reason, req.functions, req.classes)
+    if not success:
+        raise HTTPException(status_code=400, detail="Failed to lock file (not found in graph)")
+    feature = manager.state.locked_features.get(req.file_path)
+    return JSONResponse(content={"success": True, "locked_feature": feature.__dict__ if feature else None})
+
+@app.post("/api/ledger/unlock")
+async def api_unlock_file(req: UnlockRequest) -> JSONResponse:
+    manager = _get_ledger_manager()
+    success = manager.unlock_file(req.file_path, req.functions)
+    if not success:
+        raise HTTPException(status_code=400, detail="Failed to unlock file (not locked)")
+    return JSONResponse(content={"success": True})
+
+@app.get("/api/ledger")
+async def api_get_ledger() -> JSONResponse:
+    manager = _get_ledger_manager()
+    return JSONResponse(content=manager.get_ledger_summary())
+
+@app.get("/api/ledger/check")
+async def api_check_ledger(file: str = Query(...)) -> JSONResponse:
+    manager = _get_ledger_manager()
+    result = manager.check_file(file)
+    return JSONResponse(content={
+        "allowed": result.allowed,
+        "reason": result.reason,
+        "blocked_functions": result.blocked_functions,
+        "safe_to_edit": result.safe_to_edit,
+        "warning": result.warning
+    })
+
+@app.get("/api/ledger/history")
+async def api_get_ledger_history() -> JSONResponse:
+    manager = _get_ledger_manager()
+    return JSONResponse(content=manager.state.change_history)
+
+@app.post("/api/ledger/verify")
+async def api_verify_ledger() -> JSONResponse:
+    manager = _get_ledger_manager()
+    tampered = manager.verify_integrity()
+    return JSONResponse(content={"success": True, "tampered_files": tampered})

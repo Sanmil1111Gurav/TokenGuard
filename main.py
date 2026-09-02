@@ -16,12 +16,20 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
+
 from config.settings import settings
 from core.scanner import scan_codebase
 from core.parser import parse_file
 from core.graph_builder import build_dependency_graph, save_graph, load_graph, print_graph_summary
 from core.embedder import embed_codebase
 from graph.query_engine import QueryEngine
+from ledger.manager import LedgerManager
 from utils.logger import get_logger
 
 logger = get_logger()
@@ -128,7 +136,8 @@ def launch_visualizer(graph_file: Path, host: str = "127.0.0.1", port: int = 800
 
     try:
         import uvicorn
-        from api.server import app
+        from api.server import app, set_project
+        set_project(graph_file.parent)
     except ImportError as exc:
         console.print(f"[bold red]Import error:[/bold red] {exc}\nInstall with: pip install fastapi uvicorn")
         sys.exit(1)
@@ -161,6 +170,17 @@ def main():
     parser.add_argument("--hide-isolated", action="store_true", help="Hide isolated nodes (no imports, not imported) in visual")
     parser.add_argument("--port", type=int, default=8000, help="Port for the visualizer server (default: 8000)")
 
+    # ── Ledger ──
+    parser.add_argument("--lock", type=str, help="Lock a file in the ledger")
+    parser.add_argument("--unlock", type=str, help="Unlock a file in the ledger")
+    parser.add_argument("--functions", type=str, help="Comma-separated functions to lock/unlock")
+    parser.add_argument("--classes", type=str, help="Comma-separated classes to lock")
+    parser.add_argument("--reason", type=str, default="No reason provided", help="Reason for locking")
+    parser.add_argument("--ledger", action="store_true", help="List all locked features")
+    parser.add_argument("--check", type=str, help="Check if a file is safe to edit")
+    parser.add_argument("--verify", action="store_true", help="Verify integrity of locked files")
+    parser.add_argument("--history", action="store_true", help="Show full change history")
+
     args = parser.parse_args()
 
     # ── Visualize mode (does not re-scan) ──────────────────────────────────
@@ -169,6 +189,62 @@ def main():
         graph_file   = project_root / settings.GRAPH_FILENAME
         launch_visualizer(graph_file, port=args.port, hide_isolated=args.hide_isolated)
         return  # server is blocking; nothing below runs
+
+    # ── Ledger CLI ─────────────────────────────────────────────────────────
+    ledger_manager = LedgerManager(args.project)
+    
+    if args.lock:
+        funcs = args.functions.split(",") if args.functions else None
+        clss = args.classes.split(",") if args.classes else None
+        ledger_manager.lock_file(args.lock, args.reason, funcs, clss)
+        return
+        
+    if args.unlock:
+        funcs = args.functions.split(",") if args.functions else None
+        ledger_manager.unlock_file(args.unlock, funcs)
+        return
+        
+    if args.ledger:
+        ledger_manager.list_locked()
+        return
+        
+    if args.check:
+        result = ledger_manager.check_file(args.check)
+        if result.allowed:
+            console.print(f"[bold green]✅ Safe to edit:[/bold green] {args.check}")
+            if result.warning:
+                console.print(f"[bold yellow]{result.warning}[/bold yellow]")
+        else:
+            funcs_str = ", ".join(result.blocked_functions) if result.blocked_functions else "Entire file"
+            console.print(f"[bold red]❌ Blocked:[/bold red] {args.check} ({funcs_str}) - {result.reason}")
+        return
+        
+    if args.verify:
+        ledger_manager.verify_integrity()
+        return
+        
+    if args.history:
+        history = ledger_manager.state.change_history
+        if not history:
+            console.print("[dim]No ledger history found.[/dim]")
+            return
+        
+        table = Table(title="Ledger History", header_style="bold magenta")
+        table.add_column("Timestamp", style="dim")
+        table.add_column("Event", style="cyan")
+        table.add_column("File", style="green")
+        table.add_column("Details")
+        
+        for entry in history:
+            details = [f"{k}={v}" for k, v in entry.items() if k not in ["timestamp", "event", "file_path"]]
+            table.add_row(
+                entry.get("timestamp", "")[:19].replace("T", " "),
+                entry.get("event", ""),
+                entry.get("file_path", ""),
+                ", ".join(details)
+            )
+        console.print(table)
+        return
 
     # ── Step 1–4 Pipeline ──────────────────────────────────────────────────
     graph = run_pipeline(args.project, force=args.force)

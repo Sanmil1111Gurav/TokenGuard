@@ -91,6 +91,10 @@ def process_graph(graph_path: str, hide_isolated: bool = False) -> dict[str, Any
     most_connected_file = ""
     most_connected_count = -1
 
+    from ledger.manager import LedgerManager
+    project_root = str(Path(graph_path).parent)
+    manager = LedgerManager(project_root)
+
     for raw_node in raw_nodes:
         node_id: str = raw_node.get("id", raw_node.get("file_path", ""))
         ibc = len(imported_by.get(node_id, []))
@@ -106,6 +110,13 @@ def process_graph(graph_path: str, hide_isolated: bool = False) -> dict[str, Any
         cls = raw_node.get("classes", [])
         imps = raw_node.get("imports", [])
 
+        lock_status = "unlocked"
+        locked_funcs = []
+        if node_id in manager.state.locked_features:
+            feat = manager.state.locked_features[node_id]
+            lock_status = "frozen" if feat.lock_entire_file else "partially_frozen"
+            locked_funcs = feat.locked_functions
+
         node: dict[str, Any] = {
             "id": node_id,
             "label": Path(node_id).name,
@@ -120,6 +131,8 @@ def process_graph(graph_path: str, hide_isolated: bool = False) -> dict[str, Any
             "group": _first_folder(node_id),
             "summary": raw_node.get("summary", ""),
             "is_isolated": is_isolated,
+            "lock_status": lock_status,
+            "locked_functions": locked_funcs,
         }
         d3_nodes.append(node)
 

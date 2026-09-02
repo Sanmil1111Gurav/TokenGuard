@@ -53,5 +53,8 @@ class Settings:
     GRAPH_FILENAME: str = "dependency_graph.json"
     CHROMA_COLLECTION_NAME: str = "token_guard_codebase"
     TOP_K_RELEVANT: int = 5
+    
+    # ── Ledger ──
+    LEDGER_FILENAME: str = "ledger.json"
 
 settings = Settings()

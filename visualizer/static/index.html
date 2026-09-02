@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>TokenGuard — Dependency Graph</title>
   <meta name="description" content="Interactive visual dependency graph for your codebase — powered by TokenGuard."/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
@@ -247,6 +248,11 @@
     .node-pill .icon-txt { font-size:9px; fill:rgba(255,255,255,.5); dominant-baseline:central; text-anchor:middle; }
     .node-pill .fn-badge { font-size:9px; font-weight:700; dominant-baseline:central; text-anchor:middle; }
     .glow-ring { fill:none; stroke-width:2.5; stroke-dasharray:4,3; pointer-events:none; }
+    .glow-ring.frozen { stroke: #e74c3c !important; animation: pulse 2s infinite; stroke-dasharray: none; }
+    .glow-ring.partially_frozen { stroke: #f39c12 !important; animation: pulse 2s infinite; stroke-dasharray: none; }
+    .glow-ring.tampered { stroke: #9b59b6 !important; stroke-dasharray: none; }
+    .glow-ring.unlocked { stroke: #2ecc71 !important; stroke-dasharray: none; transition: opacity 3s; }
+    @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
 
     /* ── Loading ───────────────────────────────────────────────── */
     #loading {
@@ -285,6 +291,12 @@
       <div class="filter-pill active" data-folder="all" onclick="setFolder(this)">
         <div class="dot" style="background:var(--text-muted)"></div> All
       </div>
+    </div>
+
+    <div id="lock-filters" style="display:flex; gap:6px; align-items:center; margin-left: 10px;">
+      <div class="filter-pill active" data-lock="all" onclick="setLockFilter(this)">Show All</div>
+      <div class="filter-pill" data-lock="locked" onclick="setLockFilter(this)">🔒 Locked Only</div>
+      <div class="filter-pill" data-lock="unlocked" onclick="setLockFilter(this)">Unlocked Only</div>
     </div>
 
     <div id="hdr-right">
@@ -365,6 +377,9 @@
         <button class="pfooter-btn" id="pf-start" onclick="setPathNode('start')">▶ Set as Start</button>
         <button class="pfooter-btn" id="pf-end"   onclick="setPathNode('end')">■ Set as End</button>
       </div>
+      <div id="panel-lock-footer" style="padding:0 16px 12px; display:flex; gap:8px; flex-shrink:0;">
+        <button class="pfooter-btn" id="pf-lock" style="color:var(--text); border-color:var(--border);" onclick="toggleLock()">🔒 Lock / Unlock</button>
+      </div>
     </div>
 
   </div><!-- /body -->
@@ -424,6 +439,7 @@ let pathEnd   = null;
 let pathSet   = new Set();
 let q         = '';
 let folderFlt = 'all';
+let lockFlt   = 'all';
 let folderMap = {};     // group → [nodes]
 
 // ═══════════════════════════════════════════════════════════════
@@ -647,16 +663,27 @@ function render(W, H) {
     .attr('pointer-events','none')
     .text(d => d.functions.length);
 
+  // Padlock icon
+  nodeG.filter(d => d.lock_status === 'frozen' || d.lock_status === 'partially_frozen' || d.lock_status === 'tampered')
+    .append('text')
+    .attr('x', d => -d.pw/2 + 10)
+    .attr('y', 0)
+    .attr('dominant-baseline','central')
+    .attr('text-anchor','middle')
+    .attr('font-size', 10)
+    .text('🔒')
+    .attr('pointer-events','none');
+
   // Glow ring
   nodeG.append('rect')
-    .attr('class','glow-ring')
+    .attr('class', d => `glow-ring ${d.lock_status || ''}`)
     .attr('width',  d => d.pw + 8)
     .attr('height', PILL_H + 8)
     .attr('x', d => -d.pw/2 - 4)
     .attr('y', -PILL_H/2 - 4)
     .attr('rx', 11)
     .attr('stroke', d => folderColor(d.group))
-    .attr('opacity', 0);
+    .attr('opacity', d => (d.lock_status === 'frozen' || d.lock_status === 'partially_frozen' || d.lock_status === 'tampered') ? 1 : 0);
 
   // ── Tick ─────────────────────────────────────────────────────
   sim.on('tick', () => {
@@ -709,6 +736,7 @@ function onHover(event, d) {
     <div class="tip-row"><span>Imports</span><b>${d.imports_count||0}</b></div>
     <div class="tip-row"><span>Imported by</span><b>${d.imported_by_count||0}</b></div>
     ${d.summary ? `<div style="margin-top:6px;font-size:.7rem;color:var(--text-dim);font-style:italic">${d.summary}</div>` : ''}
+    ${d.lock_status === 'frozen' || d.lock_status === 'partially_frozen' ? `<div style="margin-top:6px;font-size:.7rem;color:#e74c3c;font-weight:bold;">🔒 FROZEN — ${d.locked_functions && d.locked_functions.length ? d.locked_functions.join(', ') : 'entire file'}</div>` : ''}
   `;
   tip.style.opacity = '1';
   onMove(event);
@@ -777,7 +805,7 @@ function resetStyle() {
       return tgt && tgt.imported_by_count>=3 ? 2.5 : 1.2;
     })
     .attr('marker-end','url(#arr)');
-  svgRoot.selectAll('.glow-ring').attr('opacity',0);
+  svgRoot.selectAll('.glow-ring').attr('opacity', d => (d && (d.lock_status === 'frozen' || d.lock_status === 'partially_frozen' || d.lock_status === 'tampered')) ? 1 : 0);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -787,7 +815,7 @@ async function onClick(event, d) {
   event.stopPropagation();
   selId = d.id;
   openPanel(d);
-  svgRoot.selectAll('.glow-ring').attr('opacity',0);
+  svgRoot.selectAll('.glow-ring').attr('opacity', d => (d && (d.lock_status === 'frozen' || d.lock_status === 'partially_frozen' || d.lock_status === 'tampered')) ? 1 : 0);
   svgRoot.select('#np-'+safeId(d.id)+' .glow-ring')
     .attr('opacity',.9)
     .attr('filter','url(#glow)');
@@ -801,7 +829,7 @@ async function onClick(event, d) {
 function deselect() {
   selId = null;
   document.getElementById('panel').classList.remove('open');
-  svgRoot.selectAll('.glow-ring').attr('opacity',0);
+  svgRoot.selectAll('.glow-ring').attr('opacity', d => (d && (d.lock_status === 'frozen' || d.lock_status === 'partially_frozen' || d.lock_status === 'tampered')) ? 1 : 0);
   if(pathSet.size>0) applyPathStyle(); else resetStyle();
 }
 
@@ -861,15 +889,23 @@ function navTo(id) {
 // ═══════════════════════════════════════════════════════════════
 //  FILTER
 // ═══════════════════════════════════════════════════════════════
+
 document.getElementById('search').addEventListener('input', e => {
   q = e.target.value.toLowerCase().trim();
   applyFilter();
 });
 
 function setFolder(pill) {
-  document.querySelectorAll('.filter-pill').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('#folder-filters .filter-pill').forEach(p=>p.classList.remove('active'));
   pill.classList.add('active');
   folderFlt = pill.dataset.folder;
+  applyFilter();
+}
+
+function setLockFilter(pill) {
+  document.querySelectorAll('#lock-filters .filter-pill').forEach(p=>p.classList.remove('active'));
+  pill.classList.add('active');
+  lockFlt = pill.dataset.lock;
   applyFilter();
 }
 
@@ -880,13 +916,21 @@ function setFolderByName(name) {
 
 function applyFilter() {
   if(!svgRoot) return;
-  const hasFilter = q || folderFlt !== 'all';
+  const hasFilter = q || folderFlt !== 'all' || lockFlt !== 'all';
   svgRoot.selectAll('.node-pill').each(function(d) {
     const matchQ = !q || d.id.toLowerCase().includes(q)
       || (d.functions||[]).some(f=>f.toLowerCase().includes(q))
       || (d.classes||[]).some(c=>c.toLowerCase().includes(q));
     const matchF = folderFlt==='all' || d.group===folderFlt;
-    const match  = matchQ && matchF;
+    
+    let matchL = true;
+    if (lockFlt === 'locked') {
+        matchL = d.lock_status === 'frozen' || d.lock_status === 'partially_frozen' || d.lock_status === 'tampered';
+    } else if (lockFlt === 'unlocked') {
+        matchL = d.lock_status === 'unlocked';
+    }
+    
+    const match  = matchQ && matchF && matchL;
     d3.select(this).transition().duration(200)
       .attr('opacity', hasFilter ? (match ? 1 : 0.07) : 1);
   });
@@ -1033,6 +1077,38 @@ window.addEventListener('resize', () => {
   sim.force('center', d3.forceCenter(svg.node().clientWidth/2, svg.node().clientHeight/2))
      .alpha(.15).restart();
 });
+
+// ═══════════════════════════════════════════════════════════════
+//  LOCK TOGGLE
+// ═══════════════════════════════════════════════════════════════
+async function toggleLock() {
+  if (!selId) return;
+  const node = G.nodes.find(n => n.id === selId);
+  if (!node) return;
+  
+  const isLocked = node.lock_status === 'frozen' || node.lock_status === 'partially_frozen';
+  const url = isLocked ? '/api/ledger/unlock' : '/api/ledger/lock';
+  const body = { file_path: selId };
+  if (!isLocked) {
+      body.reason = prompt("Reason for locking this file:") || "User requested lock via UI";
+  }
+  
+  try {
+      const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+      });
+      if (res.ok) {
+          // Temporarily reload the entire page to fetch updated graph
+          window.location.reload();
+      } else {
+          alert('Failed to toggle lock status');
+      }
+  } catch (err) {
+      alert('Error toggling lock: ' + err);
+  }
+}
 
 // ── Start ──────────────────────────────────────────────────────
 init();

@@ -1,0 +1,532 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "file_path": "main.py",
+      "language": "python",
+      "functions": [
+        "run_pipeline",
+        "run_query_demo",
+        "launch_visualizer",
+        "_open",
+        "main"
+      ],
+      "classes": [],
+      "imports": [
+        "argparse",
+        "json",
+        "os",
+        "sys",
+        "webbrowser",
+        "threading",
+        "time",
+        "pathlib",
+        "rich.console",
+        "rich.panel",
+        "rich.table",
+        "rich.json",
+        "config.settings",
+        "core.scanner",
+        "core.parser",
+        "core.graph_builder",
+        "core.embedder",
+        "graph.query_engine",
+        "utils.logger",
+        "uvicorn",
+        "api.server"
+      ],
+      "summary": "Python source file",
+      "id": "main.py"
+    },
+    {
+      "file_path": "api/server.py",
+      "language": "python",
+      "functions": [
+        "_get_graph_path",
+        "serve_frontend",
+        "get_graph",
+        "get_path",
+        "get_file_detail"
+      ],
+      "classes": [],
+      "imports": [
+        "json",
+        "sys",
+        "pathlib",
+        "typing",
+        "fastapi",
+        "fastapi.responses",
+        "config.settings",
+        "core.graph_builder",
+        "visualizer.graph_processor",
+        "utils.logger",
+        "networkx"
+      ],
+      "summary": "server.py \u2014 FastAPI server for TokenGuard Visual Dependency Graph.",
+      "id": "api/server.py"
+    },
+    {
+      "file_path": "api/__init__.py",
+      "language": "python",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "summary": "API package for TokenGuard visualizer server.",
+      "id": "api/__init__.py"
+    },
+    {
+      "file_path": "config/settings.py",
+      "language": "python",
+      "functions": [],
+      "classes": [
+        "Settings"
+      ],
+      "imports": [
+        "os",
+        "pathlib",
+        "dotenv"
+      ],
+      "summary": "Load environment variables from .env if present",
+      "id": "config/settings.py"
+    },
+    {
+      "file_path": "config/__init__.py",
+      "language": "python",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "summary": "Config package for TokenGuard.",
+      "id": "config/__init__.py"
+    },
+    {
+      "file_path": "core/embedder.py",
+      "language": "python",
+      "functions": [
+        "build_text_chunk",
+        "__init__",
+        "get_or_create_collection",
+        "generate_and_store_embeddings",
+        "embed_codebase"
+      ],
+      "classes": [
+        "CodebaseEmbedder"
+      ],
+      "imports": [
+        "os",
+        "typing",
+        "chromadb",
+        "chromadb.config",
+        "langchain_openai",
+        "config.settings",
+        "core.parser",
+        "utils.logger"
+      ],
+      "summary": "Python source file",
+      "id": "core/embedder.py"
+    },
+    {
+      "file_path": "core/graph_builder.py",
+      "language": "python",
+      "functions": [
+        "resolve_import_path",
+        "build_dependency_graph",
+        "save_graph",
+        "load_graph",
+        "print_graph_summary"
+      ],
+      "classes": [],
+      "imports": [
+        "json",
+        "os",
+        "pathlib",
+        "typing",
+        "networkx",
+        "config.settings",
+        "core.parser",
+        "utils.logger",
+        "rich.tree",
+        "rich.console"
+      ],
+      "summary": "Python source file",
+      "id": "core/graph_builder.py"
+    },
+    {
+      "file_path": "core/parser.py",
+      "language": "python",
+      "functions": [
+        "_detect_language",
+        "_extract_summary_regex",
+        "_parse_python_regex",
+        "_parse_js_regex",
+        "_parse_with_treesitter",
+        "traverse",
+        "parse_file"
+      ],
+      "classes": [
+        "ParsedFileMetadata"
+      ],
+      "imports": [
+        "os",
+        "re",
+        "dataclasses",
+        "pathlib",
+        "typing",
+        "config.settings",
+        "utils.logger",
+        "tree_sitter",
+        "tree_sitter_python",
+        "tree_sitter_javascript"
+      ],
+      "summary": "Python source file",
+      "id": "core/parser.py"
+    },
+    {
+      "file_path": "core/scanner.py",
+      "language": "python",
+      "functions": [
+        "scan_codebase"
+      ],
+      "classes": [],
+      "imports": [
+        "os",
+        "pathlib",
+        "typing",
+        "config.settings",
+        "utils.logger"
+      ],
+      "summary": "Python source file",
+      "id": "core/scanner.py"
+    },
+    {
+      "file_path": "core/__init__.py",
+      "language": "python",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "summary": "Core package for TokenGuard.",
+      "id": "core/__init__.py"
+    },
+    {
+      "file_path": "graph/query_engine.py",
+      "language": "python",
+      "functions": [
+        "__init__",
+        "query",
+        "query_endpoint"
+      ],
+      "classes": [
+        "QueryRequest",
+        "QueryEngine"
+      ],
+      "imports": [
+        "os",
+        "sys",
+        "pathlib",
+        "typing",
+        "networkx",
+        "chromadb",
+        "langchain_openai",
+        "fastapi",
+        "pydantic",
+        "config.settings",
+        "core.graph_builder",
+        "utils.logger"
+      ],
+      "summary": "Ensure project root is in sys.path so modules like config, core, utils can always be imported",
+      "id": "graph/query_engine.py"
+    },
+    {
+      "file_path": "graph/__init__.py",
+      "language": "python",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "summary": "Graph package for TokenGuard.",
+      "id": "graph/__init__.py"
+    },
+    {
+      "file_path": "tests/test_graph.py",
+      "language": "python",
+      "functions": [
+        "test_graph_shortest_path_and_persistence"
+      ],
+      "classes": [],
+      "imports": [
+        "tempfile",
+        "os",
+        "networkx",
+        "pytest",
+        "core.graph_builder"
+      ],
+      "summary": "Build 3-node graph manually",
+      "id": "tests/test_graph.py"
+    },
+    {
+      "file_path": "tests/test_parser.py",
+      "language": "python",
+      "functions": [
+        "test_python_regex_parser",
+        "test_parse_file_integration"
+      ],
+      "classes": [],
+      "imports": [
+        "tempfile",
+        "os",
+        "pytest",
+        "core.parser"
+      ],
+      "summary": "Python source file",
+      "id": "tests/test_parser.py"
+    },
+    {
+      "file_path": "tests/test_query.py",
+      "language": "python",
+      "functions": [
+        "test_query_engine_response_structure"
+      ],
+      "classes": [],
+      "imports": [
+        "pytest",
+        "unittest.mock",
+        "networkx",
+        "graph.query_engine"
+      ],
+      "summary": "Build 3-node graph",
+      "id": "tests/test_query.py"
+    },
+    {
+      "file_path": "tests/test_scanner.py",
+      "language": "python",
+      "functions": [
+        "test_scan_codebase_filters"
+      ],
+      "classes": [],
+      "imports": [
+        "os",
+        "tempfile",
+        "pytest",
+        "core.scanner"
+      ],
+      "summary": "Create valid files",
+      "id": "tests/test_scanner.py"
+    },
+    {
+      "file_path": "tests/__init__.py",
+      "language": "python",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "summary": "Tests package for TokenGuard.",
+      "id": "tests/__init__.py"
+    },
+    {
+      "file_path": "utils/logger.py",
+      "language": "python",
+      "functions": [
+        "get_logger",
+        "log_step"
+      ],
+      "classes": [],
+      "imports": [
+        "logging",
+        "time",
+        "contextlib",
+        "rich.console",
+        "rich.logging"
+      ],
+      "summary": "Configure logging using RichHandler",
+      "id": "utils/logger.py"
+    },
+    {
+      "file_path": "utils/__init__.py",
+      "language": "python",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "summary": "Utils package for TokenGuard.",
+      "id": "utils/__init__.py"
+    },
+    {
+      "file_path": "visualizer/graph_processor.py",
+      "language": "python",
+      "functions": [
+        "_first_folder",
+        "_node_size",
+        "_language",
+        "process_graph"
+      ],
+      "classes": [],
+      "imports": [
+        "json",
+        "pathlib",
+        "typing",
+        "utils.logger"
+      ],
+      "summary": "graph_processor.py \u2014 Transforms dependency_graph.json into D3 force-graph format.",
+      "id": "visualizer/graph_processor.py"
+    },
+    {
+      "file_path": "visualizer/__init__.py",
+      "language": "python",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "summary": "Visualizer package for TokenGuard.",
+      "id": "visualizer/__init__.py"
+    }
+  ],
+  "edges": [
+    {
+      "raw_import": "config.settings",
+      "source": "main.py",
+      "target": "config/settings.py"
+    },
+    {
+      "raw_import": "core.scanner",
+      "source": "main.py",
+      "target": "core/scanner.py"
+    },
+    {
+      "raw_import": "core.parser",
+      "source": "main.py",
+      "target": "core/parser.py"
+    },
+    {
+      "raw_import": "core.graph_builder",
+      "source": "main.py",
+      "target": "core/graph_builder.py"
+    },
+    {
+      "raw_import": "core.embedder",
+      "source": "main.py",
+      "target": "core/embedder.py"
+    },
+    {
+      "raw_import": "graph.query_engine",
+      "source": "main.py",
+      "target": "graph/query_engine.py"
+    },
+    {
+      "raw_import": "utils.logger",
+      "source": "main.py",
+      "target": "utils/logger.py"
+    },
+    {
+      "raw_import": "api.server",
+      "source": "main.py",
+      "target": "api/server.py"
+    },
+    {
+      "raw_import": "config.settings",
+      "source": "api/server.py",
+      "target": "config/settings.py"
+    },
+    {
+      "raw_import": "core.graph_builder",
+      "source": "api/server.py",
+      "target": "core/graph_builder.py"
+    },
+    {
+      "raw_import": "visualizer.graph_processor",
+      "source": "api/server.py",
+      "target": "visualizer/graph_processor.py"
+    },
+    {
+      "raw_import": "utils.logger",
+      "source": "api/server.py",
+      "target": "utils/logger.py"
+    },
+    {
+      "raw_import": "config.settings",
+      "source": "core/embedder.py",
+      "target": "config/settings.py"
+    },
+    {
+      "raw_import": "core.parser",
+      "source": "core/embedder.py",
+      "target": "core/parser.py"
+    },
+    {
+      "raw_import": "utils.logger",
+      "source": "core/embedder.py",
+      "target": "utils/logger.py"
+    },
+    {
+      "raw_import": "config.settings",
+      "source": "core/graph_builder.py",
+      "target": "config/settings.py"
+    },
+    {
+      "raw_import": "core.parser",
+      "source": "core/graph_builder.py",
+      "target": "core/parser.py"
+    },
+    {
+      "raw_import": "utils.logger",
+      "source": "core/graph_builder.py",
+      "target": "utils/logger.py"
+    },
+    {
+      "raw_import": "config.settings",
+      "source": "core/parser.py",
+      "target": "config/settings.py"
+    },
+    {
+      "raw_import": "utils.logger",
+      "source": "core/parser.py",
+      "target": "utils/logger.py"
+    },
+    {
+      "raw_import": "config.settings",
+      "source": "core/scanner.py",
+      "target": "config/settings.py"
+    },
+    {
+      "raw_import": "utils.logger",
+      "source": "core/scanner.py",
+      "target": "utils/logger.py"
+    },
+    {
+      "raw_import": "config.settings",
+      "source": "graph/query_engine.py",
+      "target": "config/settings.py"
+    },
+    {
+      "raw_import": "core.graph_builder",
+      "source": "graph/query_engine.py",
+      "target": "core/graph_builder.py"
+    },
+    {
+      "raw_import": "utils.logger",
+      "source": "graph/query_engine.py",
+      "target": "utils/logger.py"
+    },
+    {
+      "raw_import": "core.graph_builder",
+      "source": "tests/test_graph.py",
+      "target": "core/graph_builder.py"
+    },
+    {
+      "raw_import": "core.parser",
+      "source": "tests/test_parser.py",
+      "target": "core/parser.py"
+    },
+    {
+      "raw_import": "graph.query_engine",
+      "source": "tests/test_query.py",
+      "target": "graph/query_engine.py"
+    },
+    {
+      "raw_import": "core.scanner",
+      "source": "tests/test_scanner.py",
+      "target": "core/scanner.py"
+    },
+    {
+      "raw_import": "utils.logger",
+      "source": "visualizer/graph_processor.py",
+      "target": "utils/logger.py"
+    }
+  ]
+}

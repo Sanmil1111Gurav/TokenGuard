@@ -51,6 +51,7 @@ def run_pipeline(project_path: str, force: bool = False):
     if not force and graph_file.exists():
         console.print(f"[yellow]Found existing dependency graph at {graph_file}. Skipping full scan (use --force to re-scan).[/yellow]")
         graph = load_graph(str(graph_file))
+        console.print(Panel("[bold green]TokenGuard ready.[/bold green] Graph loaded from cache.", expand=False))
         return graph
 
     # Step 1 — Scan Codebase
@@ -249,8 +250,25 @@ def main():
     # ── Step 1–4 Pipeline ──────────────────────────────────────────────────
     graph = run_pipeline(args.project, force=args.force)
 
-    if args.tree and graph:
+    has_action = (
+        args.tree or args.query or args.visualize or 
+        args.lock or args.unlock or args.ledger or 
+        args.check or args.verify or args.history or args.force
+    )
+
+    if (args.tree or not has_action) and graph:
         print_graph_summary(graph)
+
+    if not has_action:
+        console.print(Panel(
+            "[bold cyan]TokenGuard Available Commands:[/bold cyan]\n"
+            "  • [yellow]python main.py --tree[/yellow]                Print dependency graph tree\n"
+            "  • [yellow]python main.py --visualize[/yellow]           Launch D3 interactive graph browser\n"
+            "  • [yellow]python main.py --query \"<task>\"[/yellow]    Query codebase for relevant files & token savings\n"
+            "  • [yellow]python main.py --ledger[/yellow]              List all locked code features\n"
+            "  • [yellow]python main.py --force[/yellow]               Force full re-scan and re-embedding",
+            expand=False
+        ))
 
     # ── Step 5 Query Demo ──────────────────────────────────────────────────
     if args.query:

@@ -116,24 +116,10 @@ class QueryEngine:
 
                     reason = "; ".join(reason_parts) if reason_parts else "matched task semantic similarity"
 
-                    from ledger.manager import LedgerManager
-                    manager = LedgerManager(str(PROJECT_ROOT))
-                    guard_result = manager.check_file(file_path)
-                    
-                    lock_status = "unlocked"
-                    locked_functions = []
-                    if file_path in manager.state.locked_features:
-                        feature = manager.state.locked_features[file_path]
-                        lock_status = "frozen" if feature.lock_entire_file else "partially_frozen"
-                        locked_functions = feature.locked_functions
-
                     relevant_files.append({
                         "file": file_path,
                         "reason": reason,
-                        "similarity_score": sim_score,
-                        "lock_status": lock_status,
-                        "locked_functions": locked_functions,
-                        "safe_functions": guard_result.safe_to_edit
+                        "similarity_score": sim_score
                     })
                     top_file_paths.append(file_path)
         except Exception as e:

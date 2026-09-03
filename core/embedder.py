@@ -1,16 +1,8 @@
 import os
 from typing import List, Dict, Any, Optional
-try:
-    import chromadb
-    from chromadb.config import Settings as ChromaSettings
-except ImportError:
-    chromadb = None
-    ChromaSettings = None
-
-try:
-    from langchain_openai import OpenAIEmbeddings
-except ImportError:
-    OpenAIEmbeddings = None
+import chromadb
+from chromadb.config import Settings as ChromaSettings
+from langchain_openai import OpenAIEmbeddings
 from config.settings import settings
 from core.parser import ParsedFileMetadata
 from utils.logger import get_logger, log_step
@@ -43,8 +35,6 @@ class CodebaseEmbedder:
     """Handles generating embeddings and persisting them in ChromaDB."""
 
     def __init__(self, persist_dir: Optional[str] = None):
-        if chromadb is None:
-            raise RuntimeError("ChromaDB is not installed. Please install it with: pip install chromadb")
         self.persist_dir = persist_dir or settings.CHROMA_PERSIST_DIR
         self.client = chromadb.PersistentClient(path=self.persist_dir)
         self.collection_name = settings.CHROMA_COLLECTION_NAME
@@ -98,19 +88,6 @@ class CodebaseEmbedder:
             documents: List[str] = []
             metadatas: List[Dict[str, Any]] = []
 
-            from ledger.manager import LedgerManager
-            from pathlib import Path
-            import sys
-            
-            # Helper function for getting ledger manager
-            def get_lock_status(file_path):
-                project_root = str(Path(__file__).resolve().parent.parent)
-                manager = LedgerManager(project_root)
-                if file_path in manager.state.locked_features:
-                    feature = manager.state.locked_features[file_path]
-                    return "frozen" if feature.lock_entire_file else "partially_frozen"
-                return "unlocked"
-
             for meta in parsed_files:
                 try:
                     chunk = build_text_chunk(meta)
@@ -123,8 +100,7 @@ class CodebaseEmbedder:
                         "functions": ", ".join(meta.functions) if meta.functions else "",
                         "classes": ", ".join(meta.classes) if meta.classes else "",
                         "imports": ", ".join(meta.imports) if meta.imports else "",
-                        "summary": meta.summary,
-                        "lock_status": get_lock_status(meta.file_path)
+                        "summary": meta.summary
                     })
                 except Exception as e:
                     logger.warning(f"Error preparing metadata for '{meta.file_path}': {e}")

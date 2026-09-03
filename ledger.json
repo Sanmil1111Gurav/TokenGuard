@@ -1,0 +1,849 @@
+{
+  "project_root": "D:\\Anti_Gravity_Workspace\\TokenGuard\\TokenGuard",
+  "created_at": "2026-09-02T20:14:01.419875+00:00",
+  "last_updated": "2026-09-03T04:42:51.703338+00:00",
+  "locked_features": {},
+  "change_history": [
+    {
+      "event": "file_locked",
+      "file_path": "api/server.py",
+      "timestamp": "2026-09-02T20:14:01.436178+00:00",
+      "reason": "test",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "main.py",
+      "timestamp": "2026-09-02T20:15:40.230199+00:00",
+      "reason": "test",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "api/server.py",
+      "timestamp": "2026-09-02T20:15:40.300391+00:00",
+      "reason": "test",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "api/__init__.py",
+      "timestamp": "2026-09-02T20:15:40.334358+00:00",
+      "reason": "test",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "config/settings.py",
+      "timestamp": "2026-09-02T20:15:40.368851+00:00",
+      "reason": "test",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "core/embedder.py",
+      "timestamp": "2026-09-02T20:15:40.396646+00:00",
+      "reason": "test",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "main.py",
+      "timestamp": "2026-09-02T20:21:06.030342+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "api/server.py",
+      "timestamp": "2026-09-02T20:21:06.412008+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "api/__init__.py",
+      "timestamp": "2026-09-02T20:21:25.684137+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "config/settings.py",
+      "timestamp": "2026-09-02T20:21:26.069335+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "core/embedder.py",
+      "timestamp": "2026-09-02T20:21:26.100760+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_locked",
+      "file_path": "main.py",
+      "timestamp": "2026-09-02T20:21:34.898222+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "api/server.py",
+      "timestamp": "2026-09-02T20:21:35.035478+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "api/__init__.py",
+      "timestamp": "2026-09-02T20:21:35.086472+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "config/settings.py",
+      "timestamp": "2026-09-02T20:21:35.141364+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "config/__init__.py",
+      "timestamp": "2026-09-02T20:21:35.192806+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "core/embedder.py",
+      "timestamp": "2026-09-02T20:21:35.238033+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "core/graph_builder.py",
+      "timestamp": "2026-09-02T20:21:35.279341+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "core/parser.py",
+      "timestamp": "2026-09-02T20:21:35.324837+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "core/scanner.py",
+      "timestamp": "2026-09-02T20:21:35.376983+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "core/__init__.py",
+      "timestamp": "2026-09-02T20:21:35.419476+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "graph/query_engine.py",
+      "timestamp": "2026-09-02T20:21:35.466212+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "graph/__init__.py",
+      "timestamp": "2026-09-02T20:21:35.509975+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "tests/test_graph.py",
+      "timestamp": "2026-09-02T20:21:35.550793+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "tests/test_parser.py",
+      "timestamp": "2026-09-02T20:21:35.586085+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "tests/test_query.py",
+      "timestamp": "2026-09-02T20:21:35.620595+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "tests/test_scanner.py",
+      "timestamp": "2026-09-02T20:21:35.657092+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "tests/__init__.py",
+      "timestamp": "2026-09-02T20:21:35.691748+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "utils/logger.py",
+      "timestamp": "2026-09-02T20:21:35.726777+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "utils/__init__.py",
+      "timestamp": "2026-09-02T20:21:35.762975+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "visualizer/graph_processor.py",
+      "timestamp": "2026-09-02T20:21:35.806350+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "visualizer/__init__.py",
+      "timestamp": "2026-09-02T20:21:35.849468+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "main.py",
+      "timestamp": "2026-09-02T20:21:50.227465+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "api/server.py",
+      "timestamp": "2026-09-02T20:21:50.359437+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "api/__init__.py",
+      "timestamp": "2026-09-02T20:21:50.399066+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "config/settings.py",
+      "timestamp": "2026-09-02T20:21:50.429090+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "config/__init__.py",
+      "timestamp": "2026-09-02T20:21:50.476083+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "core/embedder.py",
+      "timestamp": "2026-09-02T20:22:06.405102+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "core/graph_builder.py",
+      "timestamp": "2026-09-02T20:22:06.540911+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "core/parser.py",
+      "timestamp": "2026-09-02T20:22:06.586771+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "core/scanner.py",
+      "timestamp": "2026-09-02T20:22:06.636857+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "core/__init__.py",
+      "timestamp": "2026-09-02T20:22:06.677257+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "graph/query_engine.py",
+      "timestamp": "2026-09-02T20:22:06.715524+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "graph/__init__.py",
+      "timestamp": "2026-09-02T20:22:06.748582+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "tests/test_graph.py",
+      "timestamp": "2026-09-02T20:22:06.784717+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "tests/test_parser.py",
+      "timestamp": "2026-09-02T20:22:06.824477+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "tests/test_query.py",
+      "timestamp": "2026-09-02T20:22:06.858147+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "tests/test_scanner.py",
+      "timestamp": "2026-09-02T20:22:06.900992+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "tests/__init__.py",
+      "timestamp": "2026-09-02T20:22:06.935302+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "utils/logger.py",
+      "timestamp": "2026-09-02T20:22:06.977464+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "utils/__init__.py",
+      "timestamp": "2026-09-02T20:22:07.014788+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "visualizer/graph_processor.py",
+      "timestamp": "2026-09-02T20:22:07.050171+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "visualizer/__init__.py",
+      "timestamp": "2026-09-02T20:22:07.085573+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_locked",
+      "file_path": "main.py",
+      "timestamp": "2026-09-02T20:22:18.197905+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "api/server.py",
+      "timestamp": "2026-09-02T20:22:18.271935+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "api/__init__.py",
+      "timestamp": "2026-09-02T20:22:18.338491+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "config/settings.py",
+      "timestamp": "2026-09-02T20:22:18.370391+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "config/__init__.py",
+      "timestamp": "2026-09-02T20:22:18.404830+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "core/embedder.py",
+      "timestamp": "2026-09-02T20:22:18.442076+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "core/graph_builder.py",
+      "timestamp": "2026-09-02T20:22:18.476296+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "main.py",
+      "timestamp": "2026-09-02T20:23:30.302400+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "api/server.py",
+      "timestamp": "2026-09-02T20:23:30.400847+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "api/__init__.py",
+      "timestamp": "2026-09-02T20:23:30.437332+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "config/settings.py",
+      "timestamp": "2026-09-02T20:23:30.479934+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "config/__init__.py",
+      "timestamp": "2026-09-02T20:23:30.513321+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "core/embedder.py",
+      "timestamp": "2026-09-02T20:23:30.551214+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "core/graph_builder.py",
+      "timestamp": "2026-09-02T20:23:30.595051+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_locked",
+      "file_path": "main.py",
+      "timestamp": "2026-09-02T20:25:26.907187+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "api/server.py",
+      "timestamp": "2026-09-02T20:25:27.069377+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "api/__init__.py",
+      "timestamp": "2026-09-02T20:25:27.122081+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "config/settings.py",
+      "timestamp": "2026-09-02T20:25:27.176558+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "config/__init__.py",
+      "timestamp": "2026-09-02T20:25:27.227662+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "main.py",
+      "timestamp": "2026-09-02T20:25:54.277425+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "api/server.py",
+      "timestamp": "2026-09-02T20:25:54.702392+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "api/__init__.py",
+      "timestamp": "2026-09-02T20:25:54.767408+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "config/settings.py",
+      "timestamp": "2026-09-02T20:25:54.846446+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "config/__init__.py",
+      "timestamp": "2026-09-02T20:25:54.957728+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_locked",
+      "file_path": "main.py",
+      "timestamp": "2026-09-02T20:26:01.703997+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "api/server.py",
+      "timestamp": "2026-09-02T20:26:01.838187+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "api/__init__.py",
+      "timestamp": "2026-09-02T20:26:01.885564+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "config/settings.py",
+      "timestamp": "2026-09-02T20:26:01.930812+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "main.py",
+      "timestamp": "2026-09-02T20:26:20.624560+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "api/server.py",
+      "timestamp": "2026-09-02T20:26:20.755691+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "api/__init__.py",
+      "timestamp": "2026-09-02T20:26:20.810241+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "config/settings.py",
+      "timestamp": "2026-09-02T20:26:20.869099+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_locked",
+      "file_path": "api/server.py",
+      "timestamp": "2026-09-02T20:29:04.738326+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "config/settings.py",
+      "timestamp": "2026-09-02T20:29:04.930049+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "core/embedder.py",
+      "timestamp": "2026-09-02T20:29:05.005167+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "api/server.py",
+      "timestamp": "2026-09-02T20:29:30.163610+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "config/settings.py",
+      "timestamp": "2026-09-02T20:29:30.565924+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "core/embedder.py",
+      "timestamp": "2026-09-02T20:29:30.633491+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_locked",
+      "file_path": "api/server.py",
+      "timestamp": "2026-09-02T21:24:25.852533+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "api/__init__.py",
+      "timestamp": "2026-09-02T21:24:26.005091+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "config/settings.py",
+      "timestamp": "2026-09-02T21:24:26.168616+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "core/embedder.py",
+      "timestamp": "2026-09-02T21:24:26.238058+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "api/server.py",
+      "timestamp": "2026-09-02T21:24:31.115547+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "api/__init__.py",
+      "timestamp": "2026-09-02T21:24:31.236737+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "config/settings.py",
+      "timestamp": "2026-09-02T21:24:31.263248+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "core/embedder.py",
+      "timestamp": "2026-09-02T21:24:31.290145+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_locked",
+      "file_path": "api/server.py",
+      "timestamp": "2026-09-03T04:42:30.497415+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "config/settings.py",
+      "timestamp": "2026-09-03T04:42:30.604810+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_locked",
+      "file_path": "core/embedder.py",
+      "timestamp": "2026-09-03T04:42:30.650636+00:00",
+      "reason": "Frozen via Visualizer UI",
+      "locked_functions": [],
+      "locked_classes": [],
+      "lock_entire_file": true
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "api/server.py",
+      "timestamp": "2026-09-03T04:42:51.208212+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "config/settings.py",
+      "timestamp": "2026-09-03T04:42:51.652409+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    },
+    {
+      "event": "file_unlocked",
+      "file_path": "core/embedder.py",
+      "timestamp": "2026-09-03T04:42:51.703312+00:00",
+      "reason": "Manual unlock",
+      "functions_unlocked": "all"
+    }
+  ]
+}

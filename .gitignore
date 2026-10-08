@@ -60,3 +60,8 @@ Thumbs.db
 # ── OS ────────────────────────────────────────────────────────────
 desktop.ini
 ehthumbs.db
+
+
+
+prompt_compression/
+sessions/

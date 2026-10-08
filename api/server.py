@@ -251,3 +251,118 @@ async def api_verify_ledger() -> JSONResponse:
     manager = _get_ledger_manager()
     tampered = manager.verify_integrity()
     return JSONResponse(content={"success": True, "tampered_files": tampered})
+
+# ---------------------------------------------------------------------------
+# Token Compression & Session Memory API
+# ---------------------------------------------------------------------------
+from prompt_compression.compressor import TokenCompressor
+from ledger.guard import before_edit, after_edit
+from sessions.session_manager import SessionManager
+
+def _get_session_manager() -> SessionManager:
+    return SessionManager(str(_PROJECT_ROOT))
+
+class CompressRequest(BaseModel):
+    task: str
+    max_input_tokens: Optional[int] = settings.MAX_INPUT_TOKENS
+    max_output_tokens: Optional[int] = settings.MAX_OUTPUT_TOKENS
+
+class TaskExecuteRequest(BaseModel):
+    task: str
+    target_file: str
+    proposed_functions: Optional[List[str]] = None
+
+@app.get("/api/session/active")
+async def api_get_active_session() -> JSONResponse:
+    """Return active session metrics, token savings history, and recent actions."""
+    manager = _get_session_manager()
+    session = manager.store.get_active_session(str(_PROJECT_ROOT))
+    if not session:
+        session = manager.start_session(str(_PROJECT_ROOT), "Interactive coding session")
+    
+    summary = manager.get_session_summary(session.session_id)
+    summary["session"] = session.to_dict()
+    return JSONResponse(content=summary)
+
+@app.post("/api/session/build_context")
+async def api_build_context(req: CompressRequest) -> JSONResponse:
+    """Build compressed context for a task prompt and record action in active session."""
+    manager = _get_session_manager()
+    session = manager.store.get_active_session(str(_PROJECT_ROOT))
+    if not session:
+        session = manager.start_session(str(_PROJECT_ROOT), "Interactive coding session")
+
+    compressor = TokenCompressor(str(_PROJECT_ROOT))
+    context = compressor.compress_input(
+        task=req.task,
+        session_id=session.session_id,
+        max_input_tokens=req.max_input_tokens or settings.MAX_INPUT_TOKENS,
+        max_output_tokens=req.max_output_tokens or settings.MAX_OUTPUT_TOKENS
+    )
+
+    stats = context.token_stats
+    action = manager.log_action(
+        session_id=session.session_id,
+        action_type="query",
+        file_path="",
+        description=f"Context built for task: {req.task}",
+        tokens_used=stats.compressed_input_tokens,
+        tokens_saved=stats.input_tokens_saved,
+        original_tokens=stats.original_input_tokens,
+        compressed_tokens=stats.compressed_input_tokens,
+        reduction_percent=stats.input_reduction_percent,
+        outcome="success"
+    )
+
+    summary = manager.get_session_summary(session.session_id)
+
+    return JSONResponse(content={
+        "context": context.to_dict(),
+        "action": action.to_dict(),
+        "session_summary": summary
+    })
+
+@app.post("/api/compress")
+async def api_compress_prompt(req: CompressRequest) -> JSONResponse:
+    """Compress context into High, Medium, Low, and Frozen priority levels and measure token savings."""
+    compressor = TokenCompressor(str(_PROJECT_ROOT))
+    context = compressor.compress_input(
+        task=req.task,
+        max_input_tokens=req.max_input_tokens or settings.MAX_INPUT_TOKENS,
+        max_output_tokens=req.max_output_tokens or settings.MAX_OUTPUT_TOKENS
+    )
+    return JSONResponse(content=context.to_dict())
+
+@app.post("/api/task/execute")
+async def api_execute_task(req: TaskExecuteRequest) -> JSONResponse:
+    """Integrated AI edit task execution with Freeze/Ledger check and Token Compression."""
+    manager = _get_ledger_manager()
+    guard_res = manager.check_file(req.target_file, req.proposed_functions)
+
+    if not guard_res.allowed:
+        return JSONResponse(
+            status_code=403,
+            content={
+                "allowed": False,
+                "status": "MODIFICATION BLOCKED",
+                "reason": f"File/feature is frozen ({guard_res.reason})",
+                "target_file": req.target_file,
+                "blocked_functions": guard_res.blocked_functions
+            }
+        )
+
+    compressor = TokenCompressor(str(_PROJECT_ROOT))
+    context = compressor.compress_input(
+        task=req.task,
+        max_input_tokens=settings.MAX_INPUT_TOKENS,
+        max_output_tokens=settings.MAX_OUTPUT_TOKENS
+    )
+
+    return JSONResponse(content={
+        "allowed": True,
+        "status": "MODIFICATION ALLOWED",
+        "target_file": req.target_file,
+        "warning": guard_res.warning,
+        "token_stats": context.token_stats.to_dict(),
+        "assembled_prompt_snippet": context.assembled_prompt[:300] + "..."
+    })

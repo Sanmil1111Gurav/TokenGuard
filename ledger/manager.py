@@ -190,7 +190,33 @@ class LedgerManager:
             file_path = file_path[2:]
             
         if file_path not in self.state.locked_features:
-            return GuardResult(allowed=True, reason="Not locked")
+            # Check dependency graph for connected frozen features (direct and indirect)
+            graph_path = os.path.join(self.project_root, settings.GRAPH_FILENAME)
+            graph = load_graph(graph_path)
+            dep_warning = ""
+            if graph and graph.has_node(file_path):
+                try:
+                    import networkx as nx
+                    undirected = graph.to_undirected()
+                    connected_nodes = set(nx.node_connected_component(undirected, file_path)) - {file_path}
+                    frozen_connected = [
+                        node for node in connected_nodes
+                        if node in self.state.locked_features
+                    ]
+                    if frozen_connected:
+                        frozen_details = [
+                            f"'{fn}' ({self.state.locked_features[fn].reason})"
+                            for fn in frozen_connected[:3]
+                        ]
+                        dep_warning = f"⚠️ Dependency Link Warning: Connected to frozen feature(s): {', '.join(frozen_details)}"
+                except Exception as e:
+                    logger.debug(f"Graph connectivity check error: {e}")
+
+            return GuardResult(
+                allowed=True,
+                reason="Not locked",
+                warning=dep_warning
+            )
             
         feature = self.state.locked_features[file_path]
         

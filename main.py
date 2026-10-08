@@ -84,8 +84,11 @@ def run_pipeline(project_path: str, force: bool = False):
     return graph
 
 
-def run_query_demo(query_text: str, project_path: str):
-    """Run natural language task query and display structured results."""
+from prompt_compression.compressor import run_compressed_task, TokenCompressor
+
+
+def run_query_demo(query_text: str, project_path: str, compress: bool = True, max_input_tokens: int = settings.MAX_INPUT_TOKENS, max_output_tokens: int = settings.MAX_OUTPUT_TOKENS):
+    """Run natural language task query with automatic Token Compression and display metrics."""
     project_root = Path(project_path).resolve()
     graph_file = project_root / settings.GRAPH_FILENAME
 
@@ -118,6 +121,35 @@ def run_query_demo(query_text: str, project_path: str):
     console.print(f"[bold green]Files to Read ({len(result.get('files_to_read', []))}):[/bold green] {result.get('files_to_read', [])}")
     console.print(f"[bold yellow]Files Skipped:[/bold yellow] {result.get('files_skipped', 0)}")
     console.print(f"[bold magenta]Estimated Tokens Saved:[/bold magenta] ~{result.get('estimated_tokens_saved', 0)} tokens\n")
+
+    if compress:
+        console.print("\n[bold cyan]=== RUNNING TOKEN COMPRESSION OBJECTIVE ===[/bold cyan]\n")
+        compressor = TokenCompressor(str(project_root))
+        context = compressor.compress_input(
+            task=query_text,
+            max_input_tokens=max_input_tokens,
+            max_output_tokens=max_output_tokens,
+            query_result=result
+        )
+
+        mock_llm_response = (
+            "```python\n"
+            "# Concise solution update\n"
+            "def execute_task():\n"
+            "    pass\n"
+            "```\n"
+            "Applied requested task logic concisely."
+        )
+
+        stats = compressor.record_output(context, mock_llm_response)
+        compressor.print_compression_report(context)
+
+        console.print(Panel(
+            "[bold white]Optimized Prompt Preview (First 500 chars):[/bold white]\n" +
+            context.assembled_prompt[:500] + "\n...",
+            title="Optimized Prompt Preview",
+            border_style="cyan"
+        ))
 
     console.print("[bold dim]Structured JSON Output:[/bold dim]")
     console.print(JSON(json.dumps(result, indent=2)))
@@ -165,6 +197,11 @@ def main():
     parser = argparse.ArgumentParser(description="TokenGuard - Codebase Dependency Graph & Embedding System")
     parser.add_argument("--project", type=str, default=".", help="Path to project directory to analyze")
     parser.add_argument("--query", type=str, default=None, help="Task description query string")
+    parser.add_argument("--compress", action="store_true", help="Perform Token Compression on task query context")
+    parser.add_argument("--max-input-tokens", type=int, default=settings.MAX_INPUT_TOKENS, help="Max input token budget")
+    parser.add_argument("--max-output-tokens", type=int, default=settings.MAX_OUTPUT_TOKENS, help="Max output token limit")
+    parser.add_argument("--edit-task", type=str, default=None, help="Task description for AI edit workflow")
+    parser.add_argument("--target-file", type=str, default=None, help="Target file for AI edit workflow")
     parser.add_argument("--force", action="store_true", help="Force full re-scan and re-embedding")
     parser.add_argument("--tree",  action="store_true", help="Print visual dependency graph tree")
     parser.add_argument("--visualize",     action="store_true", help="Launch interactive D3 visual graph in browser")
@@ -183,6 +220,46 @@ def main():
     parser.add_argument("--history", action="store_true", help="Show full change history")
 
     args = parser.parse_args()
+
+    # ── Integrated AI Edit Workflow ───────────────────────────────────────
+    if args.edit_task and args.target_file:
+        project_root = Path(args.project).resolve()
+        ledger_manager = LedgerManager(str(project_root))
+        result = ledger_manager.check_file(args.target_file)
+
+        console.print(Panel(
+            f"[bold cyan]TokenGuard AI Edit Workflow[/bold cyan]\n"
+            f"Task: [white]{args.edit_task}[/white]\n"
+            f"Target File: [yellow]{args.target_file}[/yellow]",
+            expand=False
+        ))
+
+        if not result.allowed:
+            funcs_str = ", ".join(result.blocked_functions) if result.blocked_functions else "Entire file"
+            console.print(Panel(
+                f"[bold white]🔒 MODIFICATION BLOCKED[/bold white]\n"
+                f"[white]File:[/white] {args.target_file}\n"
+                f"[white]Blocked Items:[/white] {funcs_str}\n"
+                f"[white]Reason:[/white] {result.reason}\n"
+                f"[dim]Unlock file to proceed: python main.py --unlock {args.target_file}[/dim]",
+                border_style="red",
+                expand=False
+            ))
+            return
+
+        console.print(f"[bold green]✅ Pre-Edit Check Passed:[/bold green] Safe to edit {args.target_file}")
+        if result.warning:
+            console.print(f"[bold yellow]{result.warning}[/bold yellow]")
+
+        console.print("\n[bold cyan]Running Token Compression for AI Prompt...[/bold cyan]")
+        compressor = TokenCompressor(str(project_root))
+        context = compressor.compress_input(
+            task=args.edit_task,
+            max_input_tokens=args.max_input_tokens,
+            max_output_tokens=args.max_output_tokens
+        )
+        compressor.print_compression_report(context)
+        return
 
     # ── Visualize mode (does not re-scan) ──────────────────────────────────
     if args.visualize:
@@ -265,6 +342,7 @@ def main():
             "  • [yellow]python main.py --tree[/yellow]                Print dependency graph tree\n"
             "  • [yellow]python main.py --visualize[/yellow]           Launch D3 interactive graph browser\n"
             "  • [yellow]python main.py --query \"<task>\"[/yellow]    Query codebase for relevant files & token savings\n"
+            "  • [yellow]python main.py --query \"<task>\" --compress[/yellow] Run Token Compression on task query\n"
             "  • [yellow]python main.py --ledger[/yellow]              List all locked code features\n"
             "  • [yellow]python main.py --force[/yellow]               Force full re-scan and re-embedding",
             expand=False
@@ -272,7 +350,13 @@ def main():
 
     # ── Step 5 Query Demo ──────────────────────────────────────────────────
     if args.query:
-        run_query_demo(args.query, args.project)
+        run_query_demo(
+            query_text=args.query,
+            project_path=args.project,
+            compress=args.compress,
+            max_input_tokens=args.max_input_tokens,
+            max_output_tokens=args.max_output_tokens
+        )
 
 
 if __name__ == "__main__":

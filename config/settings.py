@@ -54,6 +54,16 @@ class Settings:
     CHROMA_COLLECTION_NAME: str = "token_guard_codebase"
     TOP_K_RELEVANT: int = 5
     
+    # ── Token Compression ──
+    MAX_INPUT_TOKENS: int = int(os.getenv("MAX_INPUT_TOKENS", "4000"))
+    MAX_OUTPUT_TOKENS: int = int(os.getenv("MAX_OUTPUT_TOKENS", "1024"))
+    
+    # ── Sessions ──
+    SESSION_DIR: str = os.getenv("SESSION_DIR", "sessions")
+    SESSION_EXPIRY_DAYS: int = int(os.getenv("SESSION_EXPIRY_DAYS", "30"))
+    SNAPSHOT_TRIGGER_COUNT: int = int(os.getenv("SNAPSHOT_TRIGGER_COUNT", "10"))
+    MAX_TIER4_TOKENS: int = int(os.getenv("MAX_TIER4_TOKENS", "600"))
+
     # ── Ledger ──
     LEDGER_FILENAME: str = "ledger.json"
 

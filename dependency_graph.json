@@ -33,7 +33,9 @@
         "core.graph_builder",
         "core.embedder",
         "graph.query_engine",
+        "ledger.manager",
         "utils.logger",
+        "prompt_compression.compressor",
         "uvicorn",
         "api.server"
       ],
@@ -44,13 +46,32 @@
       "file_path": "api/server.py",
       "language": "python",
       "functions": [
+        "set_project",
         "_get_graph_path",
         "serve_frontend",
         "get_graph",
         "get_path",
-        "get_file_detail"
+        "get_file_detail",
+        "_get_ledger_manager",
+        "api_lock_file",
+        "api_lock_batch",
+        "api_unlock_file",
+        "api_unlock_batch",
+        "api_get_ledger",
+        "api_check_ledger",
+        "api_get_ledger_history",
+        "api_verify_ledger",
+        "api_compress_prompt",
+        "api_execute_task"
       ],
-      "classes": [],
+      "classes": [
+        "LockRequest",
+        "UnlockRequest",
+        "BatchLockRequest",
+        "BatchUnlockRequest",
+        "CompressRequest",
+        "TaskExecuteRequest"
+      ],
       "imports": [
         "json",
         "sys",
@@ -62,7 +83,11 @@
         "core.graph_builder",
         "visualizer.graph_processor",
         "utils.logger",
-        "networkx"
+        "networkx",
+        "pydantic",
+        "ledger.manager",
+        "prompt_compression.compressor",
+        "ledger.guard"
       ],
       "summary": "server.py \u2014 FastAPI server for TokenGuard Visual Dependency Graph.",
       "id": "api/server.py"
@@ -247,6 +272,392 @@
       "id": "graph/__init__.py"
     },
     {
+      "file_path": "ledger/guard.py",
+      "language": "python",
+      "functions": [
+        "get_manager",
+        "before_edit",
+        "after_edit"
+      ],
+      "classes": [],
+      "imports": [
+        "os",
+        "uuid",
+        "datetime",
+        "typing",
+        "rich.console",
+        "rich.panel",
+        "ledger.manager",
+        "ledger.models",
+        "utils.logger"
+      ],
+      "summary": "Python source file",
+      "id": "ledger/guard.py"
+    },
+    {
+      "file_path": "ledger/manager.py",
+      "language": "python",
+      "functions": [
+        "__init__",
+        "_load_state",
+        "_save_state",
+        "_calculate_checksum",
+        "_add_history",
+        "lock_file",
+        "unlock_file",
+        "check_file",
+        "list_locked",
+        "get_ledger_summary",
+        "verify_integrity"
+      ],
+      "classes": [
+        "LedgerManager"
+      ],
+      "imports": [
+        "hashlib",
+        "json",
+        "os",
+        "uuid",
+        "datetime",
+        "typing",
+        "config.settings",
+        "core.graph_builder",
+        "ledger.models",
+        "ledger.store",
+        "utils.logger",
+        "rich.table",
+        "rich.console",
+        "sys",
+        "networkx"
+      ],
+      "summary": "Python source file",
+      "id": "ledger/manager.py"
+    },
+    {
+      "file_path": "ledger/models.py",
+      "language": "python",
+      "functions": [],
+      "classes": [
+        "LockedFeature",
+        "LedgerState",
+        "GuardResult"
+      ],
+      "imports": [
+        "dataclasses",
+        "typing"
+      ],
+      "summary": "Python source file",
+      "id": "ledger/models.py"
+    },
+    {
+      "file_path": "ledger/store.py",
+      "language": "python",
+      "functions": [
+        "__init__",
+        "get_project_root",
+        "exists",
+        "load",
+        "save"
+      ],
+      "classes": [
+        "LedgerStore"
+      ],
+      "imports": [
+        "json",
+        "os",
+        "tempfile",
+        "pathlib",
+        "typing",
+        "config.settings",
+        "utils.logger"
+      ],
+      "summary": "Python source file",
+      "id": "ledger/store.py"
+    },
+    {
+      "file_path": "ledger/__init__.py",
+      "language": "python",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        ".models",
+        ".store",
+        ".manager",
+        ".guard"
+      ],
+      "summary": "Python source file",
+      "id": "ledger/__init__.py"
+    },
+    {
+      "file_path": "prompt_compression/compressor.py",
+      "language": "python",
+      "functions": [
+        "__init__",
+        "compress_input",
+        "record_output",
+        "print_compression_report",
+        "run_compressed_task"
+      ],
+      "classes": [
+        "TokenCompressor"
+      ],
+      "imports": [
+        "typing",
+        "rich.console",
+        "rich.table",
+        "rich.panel",
+        "config.settings",
+        "prompt_compression.models",
+        "prompt_compression.context_builder",
+        "prompt_compression.nlp_compressor",
+        "utils.logger"
+      ],
+      "summary": "Python source file",
+      "id": "prompt_compression/compressor.py"
+    },
+    {
+      "file_path": "prompt_compression/context_builder.py",
+      "language": "python",
+      "functions": [
+        "__init__",
+        "_compute_full_codebase_tokens",
+        "build_compressed_context"
+      ],
+      "classes": [
+        "ContextBuilder"
+      ],
+      "imports": [
+        "os",
+        "pathlib",
+        "typing",
+        "config.settings",
+        "core.scanner",
+        "prompt_compression.models",
+        "prompt_compression.nlp_compressor",
+        "prompt_compression.tier_manager",
+        "utils.logger"
+      ],
+      "summary": "Python source file",
+      "id": "prompt_compression/context_builder.py"
+    },
+    {
+      "file_path": "prompt_compression/models.py",
+      "language": "python",
+      "functions": [
+        "to_dict",
+        "from_dict"
+      ],
+      "classes": [
+        "PriorityLevel",
+        "CodeContextItem",
+        "TokenStats",
+        "SessionAction",
+        "Session",
+        "ContextTier",
+        "CompressedContext"
+      ],
+      "imports": [
+        "json",
+        "enum",
+        "dataclasses",
+        "typing",
+        "datetime"
+      ],
+      "summary": "Python source file",
+      "id": "prompt_compression/models.py"
+    },
+    {
+      "file_path": "prompt_compression/nlp_compressor.py",
+      "language": "python",
+      "functions": [
+        "get_tokenizer",
+        "estimate_tokens",
+        "_extract_py_docstring",
+        "compress_code_to_outline",
+        "compress_action_description"
+      ],
+      "classes": [],
+      "imports": [
+        "ast",
+        "re",
+        "typing",
+        "tiktoken"
+      ],
+      "summary": "Python source file",
+      "id": "prompt_compression/nlp_compressor.py"
+    },
+    {
+      "file_path": "prompt_compression/retriever.py",
+      "language": "python",
+      "functions": [
+        "__init__",
+        "retrieve_relevant_context",
+        "retrieve_past_sessions",
+        "store_session_context"
+      ],
+      "classes": [
+        "ContextRetriever"
+      ],
+      "imports": [
+        "os",
+        "typing",
+        "config.settings",
+        "prompt_compression.models",
+        "utils.logger",
+        "chromadb"
+      ],
+      "summary": "Python source file",
+      "id": "prompt_compression/retriever.py"
+    },
+    {
+      "file_path": "prompt_compression/snapshot_builder.py",
+      "language": "python",
+      "functions": [
+        "build_snapshot"
+      ],
+      "classes": [
+        "SnapshotBuilder"
+      ],
+      "imports": [
+        "typing",
+        "prompt_compression.models"
+      ],
+      "summary": "Python source file",
+      "id": "prompt_compression/snapshot_builder.py"
+    },
+    {
+      "file_path": "prompt_compression/tier_manager.py",
+      "language": "python",
+      "functions": [
+        "__init__",
+        "get_frozen_context",
+        "_read_file_content",
+        "classify_and_package"
+      ],
+      "classes": [
+        "TierManager"
+      ],
+      "imports": [
+        "os",
+        "pathlib",
+        "typing",
+        "config.settings",
+        "ledger.manager",
+        "ledger.models",
+        "graph.query_engine",
+        "prompt_compression.models",
+        "prompt_compression.nlp_compressor",
+        "utils.logger",
+        "core.graph_builder"
+      ],
+      "summary": "Python source file",
+      "id": "prompt_compression/tier_manager.py"
+    },
+    {
+      "file_path": "prompt_compression/__init__.py",
+      "language": "python",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "summary": "No summary available.",
+      "id": "prompt_compression/__init__.py"
+    },
+    {
+      "file_path": "sessions/session_manager.py",
+      "language": "python",
+      "functions": [
+        "__init__",
+        "start_session",
+        "log_action",
+        "get_session_summary",
+        "close_session",
+        "get_savings_report"
+      ],
+      "classes": [
+        "SessionManager"
+      ],
+      "imports": [
+        "os",
+        "uuid",
+        "datetime",
+        "pathlib",
+        "typing",
+        "rich.console",
+        "rich.table",
+        "rich.panel",
+        "config.settings",
+        "prompt_compression.models",
+        "prompt_compression.snapshot_builder",
+        "prompt_compression.retriever",
+        "sessions.session_store",
+        "utils.logger"
+      ],
+      "summary": "Python source file",
+      "id": "sessions/session_manager.py"
+    },
+    {
+      "file_path": "sessions/session_store.py",
+      "language": "python",
+      "functions": [
+        "__init__",
+        "_session_path",
+        "cleanup_expired_sessions",
+        "load",
+        "save",
+        "list_sessions",
+        "get_active_session",
+        "close_session"
+      ],
+      "classes": [
+        "SessionStore"
+      ],
+      "imports": [
+        "json",
+        "os",
+        "tempfile",
+        "datetime",
+        "pathlib",
+        "typing",
+        "config.settings",
+        "prompt_compression.models",
+        "utils.logger"
+      ],
+      "summary": "Python source file",
+      "id": "sessions/session_store.py"
+    },
+    {
+      "file_path": "sessions/__init__.py",
+      "language": "python",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "summary": "No summary available.",
+      "id": "sessions/__init__.py"
+    },
+    {
+      "file_path": "tests/test_compression.py",
+      "language": "python",
+      "functions": [
+        "test_estimate_tokens_returns_positive_int",
+        "test_compress_code_to_outline_python",
+        "test_priority_classification_and_frozen_preservation",
+        "test_token_compressor_input_output_measurement"
+      ],
+      "classes": [],
+      "imports": [
+        "pytest",
+        "unittest.mock",
+        "networkx",
+        "prompt_compression.models",
+        "prompt_compression.nlp_compressor",
+        "prompt_compression.tier_manager",
+        "prompt_compression.context_builder",
+        "prompt_compression.compressor"
+      ],
+      "summary": "Python source file",
+      "id": "tests/test_compression.py"
+    },
+    {
       "file_path": "tests/test_graph.py",
       "language": "python",
       "functions": [
@@ -362,7 +773,8 @@
         "json",
         "pathlib",
         "typing",
-        "utils.logger"
+        "utils.logger",
+        "ledger.manager"
       ],
       "summary": "graph_processor.py \u2014 Transforms dependency_graph.json into D3 force-graph format.",
       "id": "visualizer/graph_processor.py"
@@ -409,9 +821,19 @@
       "target": "graph/query_engine.py"
     },
     {
+      "raw_import": "ledger.manager",
+      "source": "main.py",
+      "target": "ledger/manager.py"
+    },
+    {
       "raw_import": "utils.logger",
       "source": "main.py",
       "target": "utils/logger.py"
+    },
+    {
+      "raw_import": "prompt_compression.compressor",
+      "source": "main.py",
+      "target": "prompt_compression/compressor.py"
     },
     {
       "raw_import": "api.server",
@@ -439,6 +861,21 @@
       "target": "utils/logger.py"
     },
     {
+      "raw_import": "ledger.manager",
+      "source": "api/server.py",
+      "target": "ledger/manager.py"
+    },
+    {
+      "raw_import": "prompt_compression.compressor",
+      "source": "api/server.py",
+      "target": "prompt_compression/compressor.py"
+    },
+    {
+      "raw_import": "ledger.guard",
+      "source": "api/server.py",
+      "target": "ledger/guard.py"
+    },
+    {
       "raw_import": "config.settings",
       "source": "core/embedder.py",
       "target": "config/settings.py"
@@ -502,6 +939,261 @@
       "raw_import": "utils.logger",
       "source": "graph/query_engine.py",
       "target": "utils/logger.py"
+    },
+    {
+      "raw_import": "ledger.manager",
+      "source": "ledger/guard.py",
+      "target": "ledger/manager.py"
+    },
+    {
+      "raw_import": "ledger.models",
+      "source": "ledger/guard.py",
+      "target": "ledger/models.py"
+    },
+    {
+      "raw_import": "utils.logger",
+      "source": "ledger/guard.py",
+      "target": "utils/logger.py"
+    },
+    {
+      "raw_import": "config.settings",
+      "source": "ledger/manager.py",
+      "target": "config/settings.py"
+    },
+    {
+      "raw_import": "core.graph_builder",
+      "source": "ledger/manager.py",
+      "target": "core/graph_builder.py"
+    },
+    {
+      "raw_import": "ledger.models",
+      "source": "ledger/manager.py",
+      "target": "ledger/models.py"
+    },
+    {
+      "raw_import": "ledger.store",
+      "source": "ledger/manager.py",
+      "target": "ledger/store.py"
+    },
+    {
+      "raw_import": "utils.logger",
+      "source": "ledger/manager.py",
+      "target": "utils/logger.py"
+    },
+    {
+      "raw_import": "config.settings",
+      "source": "ledger/store.py",
+      "target": "config/settings.py"
+    },
+    {
+      "raw_import": "utils.logger",
+      "source": "ledger/store.py",
+      "target": "utils/logger.py"
+    },
+    {
+      "raw_import": ".models",
+      "source": "ledger/__init__.py",
+      "target": "ledger/models.py"
+    },
+    {
+      "raw_import": ".store",
+      "source": "ledger/__init__.py",
+      "target": "ledger/store.py"
+    },
+    {
+      "raw_import": ".manager",
+      "source": "ledger/__init__.py",
+      "target": "ledger/manager.py"
+    },
+    {
+      "raw_import": ".guard",
+      "source": "ledger/__init__.py",
+      "target": "ledger/guard.py"
+    },
+    {
+      "raw_import": "config.settings",
+      "source": "prompt_compression/compressor.py",
+      "target": "config/settings.py"
+    },
+    {
+      "raw_import": "prompt_compression.models",
+      "source": "prompt_compression/compressor.py",
+      "target": "prompt_compression/models.py"
+    },
+    {
+      "raw_import": "prompt_compression.context_builder",
+      "source": "prompt_compression/compressor.py",
+      "target": "prompt_compression/context_builder.py"
+    },
+    {
+      "raw_import": "prompt_compression.nlp_compressor",
+      "source": "prompt_compression/compressor.py",
+      "target": "prompt_compression/nlp_compressor.py"
+    },
+    {
+      "raw_import": "utils.logger",
+      "source": "prompt_compression/compressor.py",
+      "target": "utils/logger.py"
+    },
+    {
+      "raw_import": "config.settings",
+      "source": "prompt_compression/context_builder.py",
+      "target": "config/settings.py"
+    },
+    {
+      "raw_import": "core.scanner",
+      "source": "prompt_compression/context_builder.py",
+      "target": "core/scanner.py"
+    },
+    {
+      "raw_import": "prompt_compression.models",
+      "source": "prompt_compression/context_builder.py",
+      "target": "prompt_compression/models.py"
+    },
+    {
+      "raw_import": "prompt_compression.nlp_compressor",
+      "source": "prompt_compression/context_builder.py",
+      "target": "prompt_compression/nlp_compressor.py"
+    },
+    {
+      "raw_import": "prompt_compression.tier_manager",
+      "source": "prompt_compression/context_builder.py",
+      "target": "prompt_compression/tier_manager.py"
+    },
+    {
+      "raw_import": "utils.logger",
+      "source": "prompt_compression/context_builder.py",
+      "target": "utils/logger.py"
+    },
+    {
+      "raw_import": "config.settings",
+      "source": "prompt_compression/retriever.py",
+      "target": "config/settings.py"
+    },
+    {
+      "raw_import": "prompt_compression.models",
+      "source": "prompt_compression/retriever.py",
+      "target": "prompt_compression/models.py"
+    },
+    {
+      "raw_import": "utils.logger",
+      "source": "prompt_compression/retriever.py",
+      "target": "utils/logger.py"
+    },
+    {
+      "raw_import": "prompt_compression.models",
+      "source": "prompt_compression/snapshot_builder.py",
+      "target": "prompt_compression/models.py"
+    },
+    {
+      "raw_import": "config.settings",
+      "source": "prompt_compression/tier_manager.py",
+      "target": "config/settings.py"
+    },
+    {
+      "raw_import": "ledger.manager",
+      "source": "prompt_compression/tier_manager.py",
+      "target": "ledger/manager.py"
+    },
+    {
+      "raw_import": "ledger.models",
+      "source": "prompt_compression/tier_manager.py",
+      "target": "ledger/models.py"
+    },
+    {
+      "raw_import": "graph.query_engine",
+      "source": "prompt_compression/tier_manager.py",
+      "target": "graph/query_engine.py"
+    },
+    {
+      "raw_import": "prompt_compression.models",
+      "source": "prompt_compression/tier_manager.py",
+      "target": "prompt_compression/models.py"
+    },
+    {
+      "raw_import": "prompt_compression.nlp_compressor",
+      "source": "prompt_compression/tier_manager.py",
+      "target": "prompt_compression/nlp_compressor.py"
+    },
+    {
+      "raw_import": "utils.logger",
+      "source": "prompt_compression/tier_manager.py",
+      "target": "utils/logger.py"
+    },
+    {
+      "raw_import": "core.graph_builder",
+      "source": "prompt_compression/tier_manager.py",
+      "target": "core/graph_builder.py"
+    },
+    {
+      "raw_import": "config.settings",
+      "source": "sessions/session_manager.py",
+      "target": "config/settings.py"
+    },
+    {
+      "raw_import": "prompt_compression.models",
+      "source": "sessions/session_manager.py",
+      "target": "prompt_compression/models.py"
+    },
+    {
+      "raw_import": "prompt_compression.snapshot_builder",
+      "source": "sessions/session_manager.py",
+      "target": "prompt_compression/snapshot_builder.py"
+    },
+    {
+      "raw_import": "prompt_compression.retriever",
+      "source": "sessions/session_manager.py",
+      "target": "prompt_compression/retriever.py"
+    },
+    {
+      "raw_import": "sessions.session_store",
+      "source": "sessions/session_manager.py",
+      "target": "sessions/session_store.py"
+    },
+    {
+      "raw_import": "utils.logger",
+      "source": "sessions/session_manager.py",
+      "target": "utils/logger.py"
+    },
+    {
+      "raw_import": "config.settings",
+      "source": "sessions/session_store.py",
+      "target": "config/settings.py"
+    },
+    {
+      "raw_import": "prompt_compression.models",
+      "source": "sessions/session_store.py",
+      "target": "prompt_compression/models.py"
+    },
+    {
+      "raw_import": "utils.logger",
+      "source": "sessions/session_store.py",
+      "target": "utils/logger.py"
+    },
+    {
+      "raw_import": "prompt_compression.models",
+      "source": "tests/test_compression.py",
+      "target": "prompt_compression/models.py"
+    },
+    {
+      "raw_import": "prompt_compression.nlp_compressor",
+      "source": "tests/test_compression.py",
+      "target": "prompt_compression/nlp_compressor.py"
+    },
+    {
+      "raw_import": "prompt_compression.tier_manager",
+      "source": "tests/test_compression.py",
+      "target": "prompt_compression/tier_manager.py"
+    },
+    {
+      "raw_import": "prompt_compression.context_builder",
+      "source": "tests/test_compression.py",
+      "target": "prompt_compression/context_builder.py"
+    },
+    {
+      "raw_import": "prompt_compression.compressor",
+      "source": "tests/test_compression.py",
+      "target": "prompt_compression/compressor.py"
     },
     {
       "raw_import": "core.graph_builder",
@@ -527,6 +1219,11 @@
       "raw_import": "utils.logger",
       "source": "visualizer/graph_processor.py",
       "target": "utils/logger.py"
+    },
+    {
+      "raw_import": "ledger.manager",
+      "source": "visualizer/graph_processor.py",
+      "target": "ledger/manager.py"
     }
   ]
 }

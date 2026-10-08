@@ -133,17 +133,187 @@
     #btn-clear-path.show { display:block; }
     #btn-clear-path:hover { border-color:var(--end-color); color:var(--end-color); }
 
-    /* ── Path result tooltip ───────────────────────────────────── */
-    #path-result {
-      position:absolute; top:14px; left:14px; background:var(--surface);
-      border:1px solid var(--border); border-radius:12px; padding:14px 16px;
-      font-size:.78rem; max-width:240px; z-index:6; display:none;
-      box-shadow:0 8px 32px rgba(0,0,0,.5);
+    /* ── Animated Directional Path Lines ──────────────────────── */
+    @keyframes flowDash {
+      0% { stroke-dashoffset: 28; }
+      100% { stroke-dashoffset: 0; }
     }
-    #path-result h4 { color:var(--path-color); margin-bottom:10px; font-size:.82rem; display:flex; align-items:center; gap:6px; }
-    #path-result ol { padding-left:18px; }
-    #path-result li { color:var(--text-muted); margin-bottom:4px; font-family:'JetBrains Mono',monospace; font-size:.72rem; }
-    #path-result li b { color:var(--text); }
+    .path-glow-backing {
+      stroke: #00f3ff;
+      stroke-width: 5px;
+      stroke-opacity: 0.45;
+      filter: drop-shadow(0 0 8px rgba(0, 243, 255, 0.8));
+      pointer-events: none;
+    }
+    .path-animated-edge {
+      stroke: #00f3ff;
+      stroke-width: 3.5px;
+      stroke-dasharray: 8 6;
+      stroke-linecap: round;
+      animation: flowDash 0.75s linear infinite;
+      filter: drop-shadow(0 0 6px rgba(0, 243, 255, 0.8));
+      pointer-events: none;
+    }
+
+    /* ── Path result card ─────────────────────────────────────────── */
+    #path-result {
+      position: absolute;
+      top: 60px;
+      left: 18px;
+      background: rgba(15, 20, 32, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(0, 243, 255, 0.35);
+      border-radius: 14px;
+      padding: 14px 16px;
+      width: 270px;
+      max-height: 520px;
+      overflow-y: auto;
+      z-index: 25;
+      display: none;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 243, 255, 0.15);
+    }
+    #path-result::-webkit-scrollbar { width: 5px; }
+    #path-result::-webkit-scrollbar-thumb { background: #3b4261; border-radius: 4px; }
+
+    .path-result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .path-result-header h4 {
+      color: #00f3ff;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: 0;
+      letter-spacing: 0.3px;
+    }
+    .path-close-btn {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+    .path-close-btn:hover {
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.15);
+    }
+
+    .path-step-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 8px 10px;
+      transition: all 0.2s ease;
+    }
+    .path-step-card:hover {
+      border-color: rgba(0, 243, 255, 0.4);
+      background: rgba(0, 243, 255, 0.06);
+    }
+    .path-step-card.start-step {
+      border-color: rgba(74, 222, 128, 0.4);
+      background: rgba(74, 222, 128, 0.06);
+    }
+    .path-step-card.end-step {
+      border-color: rgba(248, 113, 113, 0.4);
+      background: rgba(248, 113, 113, 0.06);
+    }
+
+    .path-step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(0, 243, 255, 0.15);
+      color: #00f3ff;
+      border: 1px solid rgba(0, 243, 255, 0.4);
+      font-size: 0.7rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .start-step .path-step-num {
+      background: rgba(74, 222, 128, 0.2);
+      color: #4ade80;
+      border-color: #4ade80;
+    }
+    .end-step .path-step-num {
+      background: rgba(248, 113, 113, 0.2);
+      color: #f87171;
+      border-color: #f87171;
+    }
+
+    .path-step-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .path-step-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .path-step-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 3px;
+    }
+    .path-step-group {
+      font-size: 0.62rem;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .path-step-tag {
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      font-weight: 600;
+    }
+
+    .path-connector {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 0;
+      position: relative;
+    }
+    .path-line-track {
+      width: 2px;
+      height: 10px;
+      background: linear-gradient(to bottom, rgba(0, 243, 255, 0.6), rgba(0, 243, 255, 0.2));
+    }
+    .path-arrow-down {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(0, 243, 255, 0.12);
+      border: 1px solid rgba(0, 243, 255, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: -2px;
+      margin-bottom: -2px;
+    }
 
     /* ── Legend ────────────────────────────────────────────────── */
     #legend {
@@ -187,7 +357,7 @@
       display:flex; flex-direction:column; overflow:hidden;
       transition:width .25s cubic-bezier(.4,0,.2,1); flex-shrink:0;
     }
-    #panel.open { width:310px; }
+    #panel.open { width:370px; }
 
     #panel-top {
       padding:16px 16px 12px; border-bottom:1px solid var(--border); flex-shrink:0;
@@ -202,9 +372,11 @@
     .metric .val { font-size:1.1rem; font-weight:700; color:var(--text); display:block; }
     .metric .lbl { font-size:.65rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; }
 
-    #panel-body { flex:1; overflow-y:auto; padding:14px 16px; }
-    #panel-body::-webkit-scrollbar { width:3px; }
-    #panel-body::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+    #panel-body { flex:1; overflow-y:auto; padding:14px 16px; scrollbar-width:thin; scrollbar-color:#3b4261 transparent; }
+    #panel-body::-webkit-scrollbar { width:7px; }
+    #panel-body::-webkit-scrollbar-track { background:transparent; }
+    #panel-body::-webkit-scrollbar-thumb { background:#3b4261; border-radius:4px; transition:background .15s; }
+    #panel-body::-webkit-scrollbar-thumb:hover { background:#4c566a; }
 
     .sec-title {
       font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.8px;
@@ -230,8 +402,10 @@
       padding:10px; max-height:180px; overflow-y:auto; overflow-x:auto;
       white-space:pre; line-height:1.6;
     }
-    pre#src-preview::-webkit-scrollbar { width:3px; height:3px; }
-    pre#src-preview::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+    pre#src-preview::-webkit-scrollbar { width:7px; height:7px; }
+    pre#src-preview::-webkit-scrollbar-track { background:transparent; }
+    pre#src-preview::-webkit-scrollbar-thumb { background:#3b4261; border-radius:4px; transition:background .15s; }
+    pre#src-preview::-webkit-scrollbar-thumb:hover { background:#4c566a; }
 
     #panel-footer { padding:12px 16px; border-top:1px solid var(--border); display:flex; gap:8px; flex-shrink:0; }
     .pfooter-btn { flex:1; padding:8px; border-radius:8px; font-size:.78rem; font-weight:600; cursor:pointer; border:1px solid; font-family:inherit; transition:all .15s; }
@@ -305,7 +479,11 @@
       cursor: pointer; padding: 4px; border-radius: 4px; transition: color 0.15s;
     }
     .modal-close:hover { color: var(--text); }
-    .modal-body { padding: 16px 20px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+    .modal-body { padding: 16px 20px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; scrollbar-width:thin; scrollbar-color:#3b4261 transparent; }
+    .modal-body::-webkit-scrollbar { width: 7px; }
+    .modal-body::-webkit-scrollbar-track { background: transparent; }
+    .modal-body::-webkit-scrollbar-thumb { background: #3b4261; border-radius: 4px; transition: background .15s; }
+    .modal-body::-webkit-scrollbar-thumb:hover { background: #4c566a; }
     .modal-subtitle { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
     .modal-actions-bar {
       display: flex; align-items: center; justify-content: space-between;
@@ -316,8 +494,10 @@
       display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow-y: auto;
       padding-right: 4px; margin-top: 4px;
     }
-    .modal-file-list::-webkit-scrollbar { width: 4px; }
-    .modal-file-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .modal-file-list::-webkit-scrollbar { width: 7px; }
+    .modal-file-list::-webkit-scrollbar-track { background: transparent; }
+    .modal-file-list::-webkit-scrollbar-thumb { background: #3b4261; border-radius: 4px; transition: background .15s; }
+    .modal-file-list::-webkit-scrollbar-thumb:hover { background: #4c566a; }
     .modal-file-item {
       display: flex; align-items: center; gap: 10px; padding: 8px 12px;
       background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
@@ -341,6 +521,177 @@
     .modal-btn.confirm:hover { background: #2563eb; }
     .modal-btn.unfreeze { background: #ef4444; color: #fff; }
     .modal-btn.unfreeze:hover { background: #dc2626; }
+
+    /* ── Panel Tabs ────────────────────────────────────────────── */
+    #panel-tabs {
+      display: flex; background: var(--bg); border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .ptab {
+      flex: 1; padding: 12px 10px; background: transparent; border: none;
+      color: var(--text-muted); font-size: 0.8rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s; border-bottom: 2px solid transparent;
+      font-family: inherit;
+    }
+    .ptab:hover { color: var(--text); }
+    .ptab.active {
+      color: #60a5fa; border-bottom-color: #60a5fa; background: var(--surface);
+    }
+
+    #node-view { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ── Session Memory View ───────────────────────────────────── */
+    #session-view { display: none; flex-direction: column; flex: 1; overflow-y: auto; padding: 16px; gap: 14px; scrollbar-width:thin; scrollbar-color:#3b4261 transparent; }
+    #session-view::-webkit-scrollbar { width: 7px; }
+    #session-view::-webkit-scrollbar-track { background: transparent; }
+    #session-view::-webkit-scrollbar-thumb { background: #3b4261; border-radius: 4px; transition: background .15s; }
+    #session-view::-webkit-scrollbar-thumb:hover { background: #4c566a; }
+    #session-view.open { display: flex; }
+
+    .sess-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+    .sess-title { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .badge-active { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); padding: 2px 8px; border-radius: 12px; font-size: 0.65rem; font-weight: 700; }
+    .sess-id { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-dim); word-break: break-all; margin-bottom: 4px; }
+
+    .sess-hero-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
+      border: 1px solid var(--border2); border-radius: 14px; padding: 20px;
+      text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .sess-hero-pct { font-size: 3rem; font-weight: 800; color: #38bdf8; line-height: 1; letter-spacing: -1px; }
+    .sess-hero-lbl { font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; }
+
+    .sess-stats-row { display: flex; gap: 10px; }
+    .sess-stat-card {
+      flex: 1; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px; text-align: center;
+    }
+    .sess-stat-num { font-size: 1.3rem; font-weight: 700; color: var(--text); display: block; font-family: 'JetBrains Mono', monospace; }
+    .sess-stat-num.green { color: #34d399; }
+    .sess-stat-lbl { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
+
+    .btn-gradient {
+      width: 100%; padding: 12px; border-radius: 10px; border: none;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      color: #fff; font-size: 0.85rem; font-weight: 700; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4); transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-gradient:hover { opacity: 0.92; transform: translateY(-1px); }
+
+    .chart-box {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px; height: 130px; position: relative;
+    }
+
+    .recent-card {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px; margin-bottom: 8px;
+      cursor: pointer; transition: all 0.2s ease;
+    }
+    .recent-card:hover {
+      border-color: #60a5fa;
+      background: var(--surface2);
+      transform: translateY(-1px);
+    }
+
+    /* ── Activity Bar (Far Left) ────────────────────────────────── */
+    #activity-bar {
+      width: 52px; background: var(--surface); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; align-items: center; padding: 14px 0;
+      gap: 12px; z-index: 25; flex-shrink: 0;
+    }
+    .act-btn {
+      width: 36px; height: 36px; border-radius: 10px; border: 1px solid transparent;
+      background: transparent; color: var(--text-muted); display: flex;
+      align-items: center; justify-content: center; cursor: pointer;
+      transition: all 0.2s ease; position: relative;
+    }
+    .act-btn:hover { color: var(--text); background: var(--surface2); }
+    .act-btn.active {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.35), rgba(99, 102, 241, 0.25));
+      color: #a78bfa; border-color: rgba(167, 139, 250, 0.5);
+      box-shadow: 0 0 14px rgba(139, 92, 246, 0.4);
+    }
+
+    /* ── Header Buttons ────────────────────────────────────────── */
+    .hdr-btn {
+      background: var(--bg); border: 1px solid var(--border2); border-radius: 8px;
+      padding: 5px 12px; color: var(--text-muted); font-size: 0.78rem; font-weight: 500;
+      cursor: pointer; transition: all 0.15s; font-family: inherit; display: flex; align-items: center;
+    }
+    .hdr-btn:hover { border-color: #60a5fa; color: var(--text); background: rgba(255,255,255,0.05); }
+    .hdr-btn.active { border-color: #60a5fa; color: #fff; background: rgba(96, 165, 250, 0.15); }
+
+    /* ── Floating Flyout Panels ─────────────────────────────────── */
+    .flyout-panel {
+      position: absolute; background: rgba(20, 23, 40, 0.95);
+      border: 1px solid var(--border2); border-radius: 14px;
+      backdrop-filter: blur(12px); box-shadow: 0 12px 36px rgba(0,0,0,0.6);
+      z-index: 60; font-size: 0.78rem; overflow-y: auto; display: flex;
+      animation: flyoutSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      scrollbar-width: thin; scrollbar-color: #3b4261 transparent;
+    }
+    .flyout-panel::-webkit-scrollbar,
+    .flyout-col-left::-webkit-scrollbar,
+    .flyout-col-right::-webkit-scrollbar {
+      width: 6px;
+    }
+    .flyout-panel::-webkit-scrollbar-thumb,
+    .flyout-col-left::-webkit-scrollbar-thumb,
+    .flyout-col-right::-webkit-scrollbar-thumb {
+      background: #3b4261; border-radius: 4px;
+    }
+    .flyout-panel::-webkit-scrollbar-thumb:hover,
+    .flyout-col-left::-webkit-scrollbar-thumb:hover,
+    .flyout-col-right::-webkit-scrollbar-thumb:hover {
+      background: #4c566a;
+    }
+    @keyframes flyoutSlide {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    #flyout-filters {
+      top: 14px; left: 64px; width: 480px; height: 305px; max-height: calc(48vh - 20px);
+    }
+    #flyout-peek {
+      top: 333px; left: 64px; width: 480px; height: 320px; max-height: calc(52vh - 40px);
+    }
+    .flyout-col-left {
+      width: 48%; border-right: 1px solid var(--border); padding: 14px;
+      display: flex; flex-direction: column; gap: 8px; overflow-y: auto;
+    }
+    .flyout-col-right {
+      width: 52%; padding: 14px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto;
+    }
+    .fly-cat-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 10px; border-radius: 8px; cursor: pointer; color: var(--text-muted);
+      border: 1px solid transparent; transition: all 0.15s; font-size: 0.75rem;
+    }
+    .fly-cat-item:hover { background: var(--surface2); color: var(--text); }
+    .fly-cat-item.active {
+      background: rgba(59, 130, 246, 0.15); border-color: rgba(96, 165, 250, 0.3);
+      color: #60a5fa; font-weight: 600;
+    }
+    .fly-badge {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+      padding: 1px 6px; font-size: 0.68rem; color: var(--text-muted);
+    }
+    .tree-item {
+      display: flex; align-items: center; gap: 6px; padding: 4px 6px;
+      color: var(--text-muted); font-family: 'JetBrains Mono', monospace;
+      font-size: 0.73rem; cursor: pointer; border-radius: 4px; transition: all 0.15s;
+    }
+    .tree-item:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .tree-item.active { color: #60a5fa !important; font-weight: 600; background: rgba(59,130,246,0.18) !important; }
+    .tree-indent { margin-left: 12px; }
+
+    /* Compact mode adjustments */
+    body.compact-mode #panel { width: 300px !important; }
+    body.compact-mode #activity-bar { width: 42px !important; }
+    body.compact-mode .sess-hero-pct { font-size: 2.2rem; }
   </style>
 </head>
 <body>
@@ -362,34 +713,171 @@
 
     <div id="search-wrap">
       <span class="ico">⌕</span>
-      <input id="search" type="text" placeholder="Search files, functions…" autocomplete="off"/>
+      <input id="search" type="text" placeholder="Search Files, functions..." autocomplete="off"/>
     </div>
 
-    <div id="folder-filters">
-      <div class="filter-pill active" data-folder="all" onclick="setFolder(this)">
-        <div class="dot" style="background:var(--text-muted)"></div> All
-      </div>
-    </div>
-
-    <div id="lock-filters" style="display:flex; gap:6px; align-items:center; margin-left: 10px;">
-      <div class="filter-pill active" data-lock="all" onclick="setLockFilter(this)">Show All</div>
-      <div class="filter-pill" data-lock="freeze" onclick="setLockFilter(this)">❄️ Freeze Files</div>
-      <div class="filter-pill" data-lock="unfreeze" onclick="setLockFilter(this)">🔓 Unfreeze Files</div>
+    <div id="lock-filters" style="display:flex; gap:8px; align-items:center; margin-left: auto; margin-right: auto;">
+      <button class="hdr-btn active" data-lock="all" onclick="setLockFilter(this)" title="Reset all filters & show all nodes">show all</button>
+      <button class="hdr-btn" data-lock="freeze" onclick="setLockFilter(this)" title="Freeze Files">❄️ Freeze Files</button>
+      <button class="hdr-btn" data-lock="unfreeze" onclick="setLockFilter(this)" title="Unfreeze Files">🔓 Unfreeze Files</button>
     </div>
 
     <div id="hdr-right">
-      <div class="stat-chip">Files <b id="s-files">—</b></div>
-      <div class="stat-chip">Edges <b id="s-edges">—</b></div>
-      <div class="stat-chip">Hub: <b id="s-hub">—</b></div>
+      <button class="hdr-btn" id="btn-compact-mode" onclick="toggleCompactMode()" title="Toggle Compact Mode">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Compact Mode
+      </button>
+      <div class="stat-chip">File: <b id="s-files">38</b></div>
+      <div class="stat-chip">Edges <b id="s-edges">87</b></div>
+      <div class="stat-chip">Hub: <b id="s-hub">logger.py</b></div>
     </div>
   </div>
 
   <!-- ── BODY ── -->
   <div id="body">
 
+    <!-- Activity Bar (Far Left) -->
+    <div id="activity-bar">
+      <button class="act-btn" id="act-btn-layout" onclick="fitGraph()" title="Reset / Fit Graph Layout">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+      </button>
+      <button class="act-btn" id="act-btn-filters" onclick="toggleFlyout('filters')" title="Active Filters & Impact">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7z"/></svg>
+      </button>
+      <button class="act-btn" id="act-btn-peek" onclick="toggleFlyout('peek')" title="Context Peek & Summary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      </button>
+    </div>
+
     <!-- Canvas -->
     <div id="canvas">
       <svg id="g"></svg>
+
+      <!-- Floating Flyout Panel 1: Active Filters & Impact -->
+      <div id="flyout-filters" class="flyout-panel" style="display:none;">
+        <div class="flyout-col-left" style="width:48%;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span style="font-size:0.7rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.6px;">Scope Filters</span>
+            <button onclick="toggleFlyout('filters')" style="background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:0.85rem;">✕</button>
+          </div>
+          <div class="fly-cat-item active" data-cat="all" onclick="selectFlyoutCategory('all', this)">
+            <span>🌐 All Files</span>
+            <span class="fly-badge" id="fly-cnt-all">0</span>
+          </div>
+          <div class="fly-cat-item" data-cat="core" onclick="selectFlyoutCategory('core', this)">
+            <span>⚙️ Core Engine Files</span>
+            <span class="fly-badge" id="fly-cnt-core">0</span>
+          </div>
+          <div class="fly-cat-item" data-cat="compression" onclick="selectFlyoutCategory('compression', this)">
+            <span>📦 Prompt & Compression</span>
+            <span class="fly-badge" id="fly-cnt-comp">0</span>
+          </div>
+          <div class="fly-cat-item" data-cat="api" onclick="selectFlyoutCategory('api', this)">
+            <span>🔌 API & Network Layer</span>
+            <span class="fly-badge" id="fly-cnt-api">0</span>
+          </div>
+          <div class="fly-cat-item" data-cat="tests" onclick="selectFlyoutCategory('tests', this)">
+            <span>🧪 Test Suite</span>
+            <span class="fly-badge" id="fly-cnt-tests">0</span>
+          </div>
+        </div>
+        <div class="flyout-col-right" style="width:52%;">
+          <div style="font-size:0.7rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:2px;">Impact Analysis</div>
+          
+          <div style="background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <span style="font-size:0.75rem; font-weight:700; color:var(--text);">Active Nodes (<span id="fly-sel-count">0</span>)</span>
+              <span id="fly-token-weight" style="font-size:0.7rem; color:#34d399; font-weight:600;">~0k tokens</span>
+            </div>
+            <div style="font-size:0.65rem; color:var(--text-dim); margin-bottom:6px;">Context Token Weight Curve</div>
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+              <span style="font-size:0.65rem; color:var(--text-muted);">low</span>
+              <svg width="100" height="20" viewBox="0 0 100 20" fill="none">
+                <path d="M0 16 L18 14 L30 4 L45 12 L60 8 L75 2 L88 12 L100 6 L100 20 L0 20 Z" fill="rgba(52, 211, 153, 0.18)"/>
+                <path d="M0 16 L18 14 L30 4 L45 12 L60 8 L75 2 L88 12 L100 6" stroke="#34d399" stroke-width="1.8" stroke-linejoin="round"/>
+              </svg>
+              <span style="font-size:0.65rem; color:var(--text-muted);">high</span>
+            </div>
+          </div>
+
+          <div style="background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:10px; cursor:pointer;" onclick="toggleImpactFilter(this)" id="btn-impact-filter">
+            <div style="font-size:0.75rem; font-weight:700; color:#fbbf24; display:flex; align-items:center; justify-content:space-between;">
+              <span>🔥 High-Impact Hubs (<span id="fly-cnt-hubs">0</span>)</span>
+              <span id="impact-badge-lbl" style="font-size:0.65rem; background:rgba(251,191,36,0.15); border:1px solid rgba(251,191,36,0.3); padding:1px 6px; border-radius:4px;">OFF</span>
+            </div>
+            <div style="font-size:0.65rem; color:var(--text-dim); margin-top:3px;">Isolate files with &ge; 4 connections consuming most tokens</div>
+          </div>
+
+          <div style="background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:8px 10px; display:flex; flex-direction:column; gap:6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.75rem; font-weight:700; color:#60a5fa;">
+                🔒 Frozen Files (<span id="fly-cnt-frozen">0</span>)
+              </span>
+              <span class="fly-badge" id="fly-cnt-frozen-badge" style="color:#60a5fa; border-color:rgba(96,165,250,0.3);">0</span>
+            </div>
+            <div style="display:flex; gap:6px; font-size:0.65rem;">
+              <button onclick="highlightFrozenOnCanvas()" style="flex:1; background:rgba(96,165,250,0.12); border:1px solid rgba(96,165,250,0.3); color:#60a5fa; border-radius:6px; padding:4px; cursor:pointer;">Highlight Frozen</button>
+              <button onclick="clearAllFrozenFiles()" style="flex:1; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:#ef4444; border-radius:6px; padding:4px; cursor:pointer;">Clear Frozen</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating Flyout Panel 2: Context Peek & Summary -->
+      <div id="flyout-peek" class="flyout-panel" style="display:none;">
+        <div class="flyout-col-left" style="width:45%;">
+          <div style="font-size:0.7rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:6px;">Context Peek</div>
+          <div class="tree-item" onclick="filterByTreeFolder('api', this)"><span>› api</span></div>
+          <div class="tree-item" onclick="filterByTreeFolder('config', this)"><span>› config</span></div>
+          <div class="tree-item" style="color:var(--text);" onclick="filterByTreeFolder('core', this)"><span>˅ core</span></div>
+          <div class="tree-item tree-indent" onclick="zoomToNode('core/scanner.py', this)"><span>📄 scanner.py</span></div>
+          <div class="tree-item" style="color:var(--text);" onclick="filterByTreeFolder('graph', this)"><span>˅ graph</span></div>
+          <div class="tree-item tree-indent" onclick="zoomToNode('graph/query_engine.py', this)"><span>📄 query_engine.py</span></div>
+          <div class="tree-item" onclick="filterByTreeFolder('ledger', this)"><span>› ledger</span></div>
+          <div class="tree-item" onclick="filterByTreeFolder('visualizer', this)"><span>› visualizer</span></div>
+        </div>
+        <div class="flyout-col-right" style="width:55%;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:0.75rem; font-weight:700; color:var(--text);">Context-sensitive Summary</span>
+            <button onclick="toggleFlyout('peek')" style="background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:0.9rem;">✕</button>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:0.65rem; color:var(--text-dim);">Token Activity Rate</span>
+            <span style="font-size:0.65rem; color:#60a5fa; font-weight:600;">Live Stream</span>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-top:2px;">
+            <span style="font-size:0.65rem; color:var(--text-muted); font-weight:500;">0 min</span>
+            <svg width="110" height="18" viewBox="0 0 110 18" fill="none">
+              <path d="M0 14 L20 12 L35 3 L50 11 L65 8 L80 2 L95 12 L110 6 L110 18 L0 18 Z" fill="rgba(96, 165, 250, 0.18)"/>
+              <path d="M0 14 L20 12 L35 3 L50 11 L65 8 L80 2 L95 12 L110 6" stroke="#60a5fa" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+            <span style="font-size:0.65rem; color:#60a5fa; font-weight:600;">Live</span>
+          </div>
+
+          <div style="background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:8px; margin-top:4px;">
+            <div style="font-size:0.72rem; font-weight:700; color:#a78bfa; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleTraceAccordion()">
+              <span>4 Forward Traces Detected</span>
+              <span id="trace-acc-arrow" style="font-size:0.65rem;">▲</span>
+            </div>
+            <div id="trace-acc-body" style="font-size:0.67rem; color:var(--text-muted); line-height:1.4; display:flex; flex-direction:column; gap:4px;">
+              <div style="display:flex; justify-content:space-between;">
+                <span>api/server.py &rarr; core/scanner.py</span>
+                <span style="color:var(--text-dim);">micro-counts: 3</span>
+              </div>
+              <div style="display:flex; justify-content:space-between;">
+                <span>api/server.py &rarr; graph/query_engine.py</span>
+                <span style="color:var(--text-dim);">micro-counts: 3</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:6px; margin-top:auto; font-size:0.68rem;">
+            <a href="#" onclick="runTraceLinksDemo(); return false;" style="color:#60a5fa; text-decoration:none;">[Trace]</a>
+            <a href="#" onclick="highlightTopHubInGraph(); return false;" style="color:#34d399; text-decoration:none;">[Highlight in Graph]</a>
+            <a href="#" onclick="showAllLinksOnCanvas(); return false;" style="color:#a78bfa; text-decoration:none;">[Show All Links]</a>
+          </div>
+        </div>
+      </div>
 
       <!-- Zoom controls -->
       <div id="zoom-ctrl">
@@ -411,9 +899,12 @@
 
       <!-- Path result -->
       <div id="path-result">
-        <h4>⚡ Shortest Path</h4>
-        <ol id="path-ol"></ol>
-        <div id="path-meta" style="margin-top:8px;color:var(--text-dim);font-size:.72rem;"></div>
+        <div class="path-result-header">
+          <h4>⚡ Shortest Path</h4>
+          <button class="path-close-btn" onclick="clearPath()" title="Close path">✕</button>
+        </div>
+        <div id="path-steps-container"></div>
+        <div id="path-meta" style="margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06); color:var(--text-dim); font-size:.72rem;"></div>
       </div>
 
       <!-- Legend -->
@@ -425,38 +916,91 @@
 
     <!-- Right panel -->
     <div id="panel">
-      <div id="panel-top">
-        <div id="panel-badge">
-          <div id="panel-folder-dot"></div>
-          <div id="panel-folder-name">—</div>
+      <div id="panel-tabs" style="display:none;">
+        <button class="ptab" id="tab-btn-node" style="display:none;" onclick="switchPanelTab('node')">Node Detail</button>
+        <button class="ptab active" id="tab-btn-session" onclick="switchPanelTab('session')">⚡ Session Memory</button>
+      </div>
+
+      <!-- Node Detail View -->
+      <div id="node-view">
+        <div id="panel-top">
+          <div id="panel-badge">
+            <div id="panel-folder-dot"></div>
+            <div id="panel-folder-name">—</div>
+          </div>
+          <div id="panel-file">Select a node</div>
+          <div id="panel-summary"></div>
+          <div id="panel-metrics">
+            <div class="metric"><span class="val" id="pm-fns">—</span><span class="lbl">Functions</span></div>
+            <div class="metric"><span class="val" id="pm-cls">—</span><span class="lbl">Classes</span></div>
+            <div class="metric"><span class="val" id="pm-imp">—</span><span class="lbl">Imports</span></div>
+            <div class="metric"><span class="val" id="pm-iby">—</span><span class="lbl">Used by</span></div>
+          </div>
         </div>
-        <div id="panel-file">Select a node</div>
-        <div id="panel-summary"></div>
-        <div id="panel-metrics">
-          <div class="metric"><span class="val" id="pm-fns">—</span><span class="lbl">Functions</span></div>
-          <div class="metric"><span class="val" id="pm-cls">—</span><span class="lbl">Classes</span></div>
-          <div class="metric"><span class="val" id="pm-imp">—</span><span class="lbl">Imports</span></div>
-          <div class="metric"><span class="val" id="pm-iby">—</span><span class="lbl">Used by</span></div>
+        <div id="panel-body">
+          <div class="sec-title">Functions <span class="badge" id="cnt-fns">0</span></div>
+          <div class="chip-wrap" id="pnl-fns"></div>
+          <div class="sec-title">Classes <span class="badge" id="cnt-cls">0</span></div>
+          <div class="chip-wrap" id="pnl-cls"></div>
+          <div class="sec-title">Imports <span class="badge" id="cnt-imp">0</span></div>
+          <div class="chip-wrap" id="pnl-imp"></div>
+          <div class="sec-title">Imported By <span class="badge" id="cnt-iby">0</span></div>
+          <div class="chip-wrap" id="pnl-iby"></div>
+          <div class="sec-title">Source Preview</div>
+          <pre id="src-preview"></pre>
+        </div>
+        <div id="panel-footer">
+          <button class="pfooter-btn" id="pf-start" onclick="setPathNode('start')">▶ Set as Start</button>
+          <button class="pfooter-btn" id="pf-end"   onclick="setPathNode('end')">■ Set as End</button>
+        </div>
+        <div id="panel-lock-footer" style="padding:0 16px 12px; display:flex; gap:8px; flex-shrink:0;">
+          <button class="pfooter-btn" id="pf-lock" style="color:var(--text); border-color:var(--border);" onclick="toggleLock()">❄️ Freeze / Unfreeze</button>
         </div>
       </div>
-      <div id="panel-body">
-        <div class="sec-title">Functions <span class="badge" id="cnt-fns">0</span></div>
-        <div class="chip-wrap" id="pnl-fns"></div>
-        <div class="sec-title">Classes <span class="badge" id="cnt-cls">0</span></div>
-        <div class="chip-wrap" id="pnl-cls"></div>
-        <div class="sec-title">Imports <span class="badge" id="cnt-imp">0</span></div>
-        <div class="chip-wrap" id="pnl-imp"></div>
-        <div class="sec-title">Imported By <span class="badge" id="cnt-iby">0</span></div>
-        <div class="chip-wrap" id="pnl-iby"></div>
-        <div class="sec-title">Source Preview</div>
-        <pre id="src-preview"></pre>
-      </div>
-      <div id="panel-footer">
-        <button class="pfooter-btn" id="pf-start" onclick="setPathNode('start')">▶ Set as Start</button>
-        <button class="pfooter-btn" id="pf-end"   onclick="setPathNode('end')">■ Set as End</button>
-      </div>
-      <div id="panel-lock-footer" style="padding:0 16px 12px; display:flex; gap:8px; flex-shrink:0;">
-        <button class="pfooter-btn" id="pf-lock" style="color:var(--text); border-color:var(--border);" onclick="toggleLock()">❄️ Freeze / Unfreeze</button>
+
+      <!-- Session Memory View -->
+      <div id="session-view">
+        <div>
+          <div class="sess-header">
+            <span class="sess-title">Active Session</span>
+            <span class="badge-active">ACTIVE</span>
+          </div>
+          <div class="sess-id" id="sess-id-val">loading...</div>
+        </div>
+
+        <div class="sess-hero-card">
+          <div class="sess-hero-pct" id="sess-pct-val">0%</div>
+          <div class="sess-hero-lbl">tokens saved this session</div>
+        </div>
+
+        <div class="sess-stats-row">
+          <div class="sess-stat-card">
+            <span class="sess-stat-num" id="sess-used-val">0</span>
+            <span class="sess-stat-lbl">USED</span>
+          </div>
+          <div class="sess-stat-card">
+            <span class="sess-stat-num green" id="sess-saved-val">0</span>
+            <span class="sess-stat-lbl">SAVED</span>
+          </div>
+        </div>
+
+        <button class="btn-gradient" onclick="openBuildContextModal()">⚡ Build Context for Task</button>
+
+        <div class="sec-title" style="margin-top:4px;">CUMULATIVE TOKENS SAVED (LIVE)</div>
+        <div class="chart-box">
+          <canvas id="savings-chart" width="260" height="115" style="width:100%; height:100%; display:block;"></canvas>
+        </div>
+
+        <div class="sec-title" style="display:flex; align-items:center; justify-content:space-between;">
+          <span>RECENT ACTIONS (LAST 5)</span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button id="view-all-actions-btn" class="modal-btn cancel" style="padding: 2px 8px; font-size: 0.7rem; border-radius: 6px; cursor: pointer;" onclick="openAllActionsModal()">View All</button>
+            <span class="badge" id="recent-count-badge">0</span>
+          </div>
+        </div>
+        <div id="recent-actions-list">
+          <div style="font-size:0.75rem; color:var(--text-dim); font-style:italic;">No session actions recorded yet.</div>
+        </div>
       </div>
     </div>
 
@@ -495,6 +1039,62 @@
     <div class="modal-footer">
       <button class="modal-btn cancel" onclick="closeFreezeModal()">Cancel</button>
       <button class="modal-btn confirm" id="modal-confirm-btn" onclick="submitBatchModal()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Build Context Task Modal -->
+<div id="build-context-modal" class="modal-overlay">
+  <div class="modal-card" style="width: 520px;">
+    <div class="modal-header">
+      <h3>⚡ Build Context for Task</h3>
+      <button class="modal-close" onclick="closeBuildContextModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-subtitle">Enter a coding task description to run Token Compression and build an optimized prompt:</div>
+      <textarea id="task-input-text" rows="3" style="width:100%; background:var(--bg); border:1px solid var(--border2); border-radius:8px; padding:10px; color:var(--text); font-family:inherit; font-size:0.85rem; outline:none; resize:none;" placeholder="e.g. refactor authentication and session management"></textarea>
+      
+      <div id="task-result-box" style="display:none; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:14px; margin-top:8px;">
+        <div style="font-size:0.82rem; font-weight:700; color:#38bdf8; margin-bottom:8px;">⚡ Token Compression Complete</div>
+        <div id="task-stats-summary" style="font-size:0.75rem; color:var(--text-muted); line-height:1.6;"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn cancel" onclick="closeBuildContextModal()">Close</button>
+      <button class="modal-btn confirm" id="btn-run-build-task" onclick="submitBuildContextTask()">⚡ Compress Context</button>
+    </div>
+  </div>
+</div>
+
+<!-- View All Session Actions Modal -->
+<div id="all-actions-modal" class="modal-overlay" onclick="if(event.target===this) closeAllActionsModal()">
+  <div class="modal-card" style="width: 580px; max-height: 80vh; display: flex; flex-direction: column;">
+    <div class="modal-header">
+      <h3>📜 Session Activities</h3>
+      <button class="modal-close" onclick="closeAllActionsModal()">✕</button>
+    </div>
+    <div class="modal-body" style="overflow-y: auto; max-height: 60vh;">
+      <div class="modal-subtitle" style="margin-bottom: 12px;">All activities recorded in the current session (sorted newest to oldest):</div>
+      <div id="all-actions-list"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn cancel" onclick="closeAllActionsModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Activity Details Modal -->
+<div id="action-details-modal" class="modal-overlay" onclick="if(event.target===this) closeActionDetailsModal()">
+  <div class="modal-card" style="width: 520px;">
+    <div class="modal-header">
+      <h3>🔍 Activity Details</h3>
+      <button class="modal-close" onclick="closeActionDetailsModal()">✕</button>
+    </div>
+    <div class="modal-body" id="action-details-content">
+      <!-- Content populated dynamically -->
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn cancel" onclick="closeActionDetailsModal()">Close</button>
     </div>
   </div>
 </div>
@@ -572,14 +1172,16 @@ async function init() {
     folderMap[n.group].push(n);
   });
   const ff = document.getElementById('folder-filters');
-  Object.entries(folderMap).forEach(([g, nodes]) => {
-    const pill = document.createElement('div');
-    pill.className = 'filter-pill';
-    pill.dataset.folder = g;
-    pill.onclick = () => setFolder(pill);
-    pill.innerHTML = `<div class="dot" style="background:${folderColor(g)}"></div>${g} <span style="color:var(--text-dim)">${nodes.length}</span>`;
-    ff.appendChild(pill);
-  });
+  if (ff) {
+    Object.entries(folderMap).forEach(([g, nodes]) => {
+      const pill = document.createElement('div');
+      pill.className = 'filter-pill';
+      pill.dataset.folder = g;
+      pill.onclick = () => setFolder(pill);
+      pill.innerHTML = `<div class="dot" style="background:${folderColor(g)}"></div>${g} <span style="color:var(--text-dim)">${nodes.length}</span>`;
+      ff.appendChild(pill);
+    });
+  }
 
   // Legend
   buildLegend();
@@ -593,6 +1195,11 @@ async function init() {
 
   buildGraph();
   attachControls();
+  updateFlyoutFilterCounts();
+
+  // Default sidebar panel open with Session Memory view active by default
+  document.getElementById('panel').classList.add('open');
+  switchPanelTab('session');
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -627,7 +1234,7 @@ function buildGraph() {
   // Arrow markers
   addArrow(defs, 'arr',      'rgba(100,116,175,0.6)', 20);
   addArrow(defs, 'arr-hi',   '#fbbf24', 18);
-  addArrow(defs, 'arr-path', '#00d4aa', 18);
+  addArrow(defs, 'arr-path', '#00f3ff', 24);
   addArrow(defs, 'arr-start','#4ade80', 18);
 
   // Glow filter
@@ -697,6 +1304,9 @@ function render(W, H) {
       return tgt && tgt.imported_by_count >= 3 ? 2.5 : 1.2;
     })
     .attr('marker-end','url(#arr)');
+
+  // ── Path Overlay layer ─────────────────────────────────────────
+  svgRoot.append('g').attr('class', 'path-overlay-layer');
 
   // ── Node groups ───────────────────────────────────────────────
   const nodeG = svgRoot.append('g').attr('class','nodes')
@@ -851,6 +1461,7 @@ function render(W, H) {
       .attr('stroke-dasharray','6,4');
   });
 
+  updatePathOverlayPositions();
   applyFilter();
 }
 
@@ -922,8 +1533,15 @@ function highlightNode(id) {
 }
 
 function resetStyle() {
+  currentPathArray = [];
+  if (svgRoot) {
+    svgRoot.select('.path-overlay-layer').selectAll('*').remove();
+    svgRoot.selectAll('.node-pill').attr('opacity', 1);
+  }
   svgRoot.selectAll('.node-pill rect:first-child')
     .attr('fill-opacity', d => folderColor(d.group)+'18')
+    .attr('stroke', d => (d.lock_status === 'frozen' || d.lock_status === 'partially_frozen') ? '#71717a' : folderColor(d.group))
+    .attr('stroke-width', d => (d.lock_status === 'frozen' || d.lock_status === 'partially_frozen') ? 1.8 : 1.2)
     .attr('stroke-opacity', 1);
   svgRoot.selectAll('.node-pill text').attr('opacity', 1);
   svgRoot.selectAll('.link')
@@ -937,7 +1555,13 @@ function resetStyle() {
       return tgt && tgt.imported_by_count>=3 ? 2.5 : 1.2;
     })
     .attr('marker-end','url(#arr)');
-  svgRoot.selectAll('.glow-ring').attr('opacity', d => (d && (d.lock_status === 'frozen' || d.lock_status === 'partially_frozen' || d.lock_status === 'tampered')) ? 1 : 0);
+  svgRoot.selectAll('.glow-ring').each(function(d) {
+    const isFrz = d && (d.lock_status === 'frozen' || d.lock_status === 'partially_frozen' || d.lock_status === 'tampered');
+    d3.select(this)
+      .attr('stroke', d ? folderColor(d.group) : '#ffffff')
+      .attr('opacity', isFrz ? 0.6 : 0)
+      .attr('filter', null);
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -960,7 +1584,7 @@ async function onClick(event, d) {
 
 function deselect() {
   selId = null;
-  document.getElementById('panel').classList.remove('open');
+  switchPanelTab('session');
   svgRoot.selectAll('.glow-ring').attr('opacity', d => (d && (d.lock_status === 'frozen' || d.lock_status === 'partially_frozen' || d.lock_status === 'tampered')) ? 1 : 0);
   if(pathSet.size>0) applyPathStyle(); else resetStyle();
 }
@@ -988,6 +1612,7 @@ function openPanel(d) {
   document.getElementById('src-preview').textContent = '';
 
   updateFreezeUI(d);
+  switchPanelTab('node');
 }
 
 function updateFreezeUI(d) {
@@ -1033,9 +1658,33 @@ function chips(wrId, cntId, arr, cls, clickable) {
   ).join('');
 }
 
-function navTo(id) {
-  const n = G.nodes.find(x=>x.id===id);
-  if(n) { openPanel(n); selId=id; }
+function navTo(id, el) {
+  zoomToNode(id, el);
+}
+
+function zoomToNode(id, el) {
+  if (el) {
+    document.querySelectorAll('.tree-item').forEach(item => item.classList.remove('active'));
+    el.classList.add('active');
+  }
+  const n = G.nodes.find(x => x.id === id || x.id.endsWith(id));
+  if (!n) return;
+
+  openPanel(n);
+  selId = n.id;
+
+  svgRoot.selectAll('.glow-ring').attr('opacity', d => (d && (d.lock_status === 'frozen' || d.lock_status === 'partially_frozen' || d.lock_status === 'tampered')) ? 1 : 0);
+  svgRoot.select('#np-' + safeId(n.id) + ' .glow-ring')
+    .attr('opacity', 0.9)
+    .attr('filter', 'url(#glow)');
+
+  const svg = d3.select('#g');
+  if (!svg.node()) return;
+  const W = svg.node().clientWidth, H = svg.node().clientHeight;
+  const sc = 1.4;
+  const tx = W / 2 - sc * (n.x != null ? n.x : W / 2);
+  const ty = H / 2 - sc * (n.y != null ? n.y : H / 2);
+  svg.transition().duration(650).call(zoomB.transform, d3.zoomIdentity.translate(tx, ty).scale(sc));
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1058,14 +1707,44 @@ function setLockFilter(pill) {
   const lockType = pill.dataset.lock;
   if (lockType === 'freeze') {
     openBatchModal('freeze');
-  } else if (lockType === 'unfreeze') {
+    return;
+  }
+  if (lockType === 'unfreeze') {
     openBatchModal('unfreeze');
+    return;
+  }
+
+  document.querySelectorAll('#lock-filters .hdr-btn').forEach(p => p.classList.remove('active'));
+  pill.classList.add('active');
+
+  if (lockType === 'all') {
+    resetAllFilters();
   } else {
-    document.querySelectorAll('#lock-filters .filter-pill').forEach(p=>p.classList.remove('active'));
-    pill.classList.add('active');
-    lockFlt = 'all';
+    lockFlt = lockType;
     applyFilter();
   }
+}
+
+function resetAllFilters() {
+  lockFlt = 'all';
+  q = '';
+  const searchInput = document.getElementById('search');
+  if (searchInput) searchInput.value = '';
+
+  selectedCategories = new Set(['all']);
+  document.querySelectorAll('.fly-cat-item').forEach(item => {
+    if (item.dataset.cat === 'all') item.classList.add('active');
+    else item.classList.remove('active');
+  });
+
+  impactFilterActive = false;
+  const impactBtn = document.getElementById('fly-impact-btn');
+  if (impactBtn) impactBtn.classList.remove('active');
+
+  clearPath();
+  resetStyle();
+  applyFilter();
+  updateFlyoutFilterCounts();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1193,6 +1872,7 @@ async function refreshGraphState() {
     G = await r.json();
 
     buildGraph();
+    updateFlyoutFilterCounts();
 
     // Reset lock filter to Show All so all nodes remain fully visible
     document.querySelectorAll('#lock-filters .filter-pill').forEach(p=>p.classList.remove('active'));
@@ -1216,14 +1896,90 @@ function setFolderByName(name) {
   if(pill) setFolder(pill);
 }
 
+let impactFilterActive = false;
+let selectedCategories = new Set(['all']);
+
+function matchesCategory(n, cat) {
+  if (!n) return false;
+  const gid = (n.group || '').toLowerCase();
+  const path = (n.id || '').toLowerCase();
+
+  if (cat === 'all') return true;
+
+  if (cat === 'core') {
+    return gid === 'core' || path.startsWith('core/') || path === 'main.py' || path.includes('scanner');
+  }
+  if (cat === 'compression') {
+    return gid === 'config' || gid === 'utils' || path.includes('compression') || path.includes('prompt') || path.startsWith('prompt_compression/') || path.includes('retriever') || path.includes('compressor');
+  }
+  if (cat === 'api') {
+    return gid === 'api' || gid === 'visualizer' || path.startsWith('api/') || path.startsWith('visualizer/') || path.includes('server');
+  }
+  if (cat === 'tests') {
+    return gid === 'tests' || path.startsWith('tests/') || path.includes('test');
+  }
+
+  return false;
+}
+
+function matchesSelectedCategories(node) {
+  if (!selectedCategories || selectedCategories.has('all')) return true;
+  for (let cat of selectedCategories) {
+    if (matchesCategory(node, cat)) return true;
+  }
+  return false;
+}
+
+function isHighImpact(node) {
+  if (!node) return false;
+  const totalDegree = (node.imported_by_count || 0) + (node.imports_count || 0);
+  return totalDegree >= 4 || (node.imported_by_count || 0) >= 2 || node.id.endsWith('logger.py') || node.id.endsWith('context_builder.py');
+}
+
+function updateFlyoutFilterCounts() {
+  if (!G || !G.nodes) return;
+
+  const countAll = G.nodes.filter(n => matchesCategory(n, 'all')).length;
+  const countCore = G.nodes.filter(n => matchesCategory(n, 'core')).length;
+  const countComp = G.nodes.filter(n => matchesCategory(n, 'compression')).length;
+  const countApi = G.nodes.filter(n => matchesCategory(n, 'api')).length;
+  const countTests = G.nodes.filter(n => matchesCategory(n, 'tests')).length;
+
+  const elAll = document.getElementById('fly-cnt-all');
+  const elCore = document.getElementById('fly-cnt-core');
+  const elComp = document.getElementById('fly-cnt-comp');
+  const elApi = document.getElementById('fly-cnt-api');
+  const elTests = document.getElementById('fly-cnt-tests');
+
+  if (elAll) elAll.textContent = countAll;
+  if (elCore) elCore.textContent = countCore;
+  if (elComp) elComp.textContent = countComp;
+  if (elApi) elApi.textContent = countApi;
+  if (elTests) elTests.textContent = countTests;
+
+  const countHubs = G.nodes.filter(n => isHighImpact(n)).length;
+  const elHubs = document.getElementById('fly-cnt-hubs');
+  if (elHubs) elHubs.textContent = countHubs;
+
+  const countFrozen = G.nodes.filter(n => n.lock_status === 'frozen' || n.lock_status === 'partially_frozen').length;
+  const elFrozen = document.getElementById('fly-cnt-frozen');
+  const elFrozenBadge = document.getElementById('fly-cnt-frozen-badge');
+  if (elFrozen) elFrozen.textContent = countFrozen;
+  if (elFrozenBadge) elFrozenBadge.textContent = countFrozen;
+}
+
 function applyFilter() {
-  if(!svgRoot) return;
-  const hasFilter = q || folderFlt !== 'all' || lockFlt !== 'all';
+  if(!svgRoot || !G) return;
+  const hasFilter = q || !selectedCategories.has('all') || lockFlt !== 'all' || compactMode || impactFilterActive;
+
+  let activeCount = 0;
+
   svgRoot.selectAll('.node-pill').each(function(d) {
     const matchQ = !q || d.id.toLowerCase().includes(q)
       || (d.functions||[]).some(f=>f.toLowerCase().includes(q))
       || (d.classes||[]).some(c=>c.toLowerCase().includes(q));
-    const matchF = folderFlt==='all' || d.group===folderFlt;
+    
+    const matchCat = matchesSelectedCategories(d);
     
     let matchL = true;
     if (lockFlt === 'locked') {
@@ -1232,14 +1988,47 @@ function applyFilter() {
         matchL = d.lock_status === 'unlocked';
     }
     
-    const match  = matchQ && matchF && matchL;
+    let matchImpact = true;
+    if (impactFilterActive) {
+      matchImpact = isHighImpact(d);
+    }
+    
+    const match = matchQ && matchCat && matchL && matchImpact;
+    if (match) activeCount++;
+
+    // Dim non-matching nodes to 15% opacity so project structure context remains visible
     d3.select(this).transition().duration(200)
-      .attr('opacity', hasFilter ? (match ? 1 : 0.07) : 1);
+      .attr('opacity', hasFilter ? (match ? 1 : 0.15) : 1);
   });
+
+  // Update Active Nodes count and Token Weight display inside Flyout Panel
+  const selCountEl = document.getElementById('fly-sel-count');
+  const tokenWeightEl = document.getElementById('fly-token-weight');
+  if (selCountEl) selCountEl.textContent = activeCount;
+  if (tokenWeightEl) {
+    const estTokens = Math.round(activeCount * 385);
+    tokenWeightEl.textContent = `~${(estTokens / 1000).toFixed(1)}k tokens`;
+  }
+
   svgRoot.selectAll('.link').transition().duration(200)
-    .attr('opacity', hasFilter ? 0.05 : 0.7);
+    .attr('opacity', d => {
+      if (compactMode) {
+        const tgt = G.nodes.find(n => n.id === (d.target.id || d.target));
+        return tgt && tgt.imported_by_count >= 2 ? 0.85 : 0.05;
+      }
+      return hasFilter ? 0.08 : 0.7;
+    })
+    .attr('stroke', d => {
+      if (compactMode) {
+        const tgt = G.nodes.find(n => n.id === (d.target.id || d.target));
+        return tgt && tgt.imported_by_count >= 2 ? '#60a5fa' : 'rgba(100,116,175,0.12)';
+      }
+      const tgt = G.nodes.find(n => n.id === (d.target.id || d.target));
+      return tgt ? folderColor(tgt.group) + '60' : 'rgba(100,116,175,0.35)';
+    });
+
   svgRoot.selectAll('.hull').transition().duration(200)
-    .attr('opacity', (folderFlt==='all') ? 1 : ([g]) => g===folderFlt ? 1 : 0.1);
+    .attr('opacity', (selectedCategories.has('all') && !compactMode) ? 1 : 0.12);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1277,63 +2066,209 @@ async function findPath() {
   animatePath(data.path);
 }
 
+let currentPathArray = [];
+
 function applyPathStyle(path) {
-  const ps = pathSet;
+  if (path) currentPathArray = path;
+  else path = currentPathArray;
+
+  if (!path || !path.length) return;
+  pathSet = new Set(path);
+
+  // Dim non-path node pills to 20% opacity (0.2)
+  svgRoot.selectAll('.node-pill').each(function(d) {
+    const isPathNode = pathSet.has(d.id);
+    d3.select(this).transition().duration(200)
+      .attr('opacity', isPathNode ? 1 : 0.2);
+  });
+
   svgRoot.selectAll('.node-pill rect:first-child')
-    .attr('fill-opacity', d => ps.has(d.id) ? folderColor(d.group)+'30' : folderColor(d.group)+'08')
-    .attr('stroke-opacity', d => ps.has(d.id) ? 1 : 0.12);
-  svgRoot.selectAll('.node-pill text').attr('opacity', d => ps.has(d.id) ? 1 : 0.15);
-  svgRoot.selectAll('.link')
-    .attr('stroke', d => {
-      const s=d.source.id||d.source, t=d.target.id||d.target;
-      return (ps.has(s)&&ps.has(t)) ? '#00d4aa' : 'rgba(100,116,175,0.08)';
-    })
-    .attr('stroke-width', d => {
-      const s=d.source.id||d.source, t=d.target.id||d.target;
-      return (ps.has(s)&&ps.has(t)) ? 2.5 : 1;
-    })
-    .attr('stroke-opacity', d => {
-      const s=d.source.id||d.source, t=d.target.id||d.target;
-      return (ps.has(s)&&ps.has(t)) ? 1 : 0.06;
-    })
-    .attr('marker-end', d => {
-      const s=d.source.id||d.source, t=d.target.id||d.target;
-      return (ps.has(s)&&ps.has(t)) ? 'url(#arr-path)' : 'url(#arr)';
-    });
+    .attr('fill-opacity', d => pathSet.has(d.id) ? folderColor(d.group) + '35' : folderColor(d.group) + '08')
+    .attr('stroke', d => pathSet.has(d.id) ? '#00f3ff' : (d.lock_status === 'frozen' ? '#71717a' : folderColor(d.group)))
+    .attr('stroke-width', d => pathSet.has(d.id) ? 2.2 : 1.2)
+    .attr('stroke-opacity', d => pathSet.has(d.id) ? 1 : 0.2);
+
+  svgRoot.selectAll('.node-pill text').attr('opacity', d => pathSet.has(d.id) ? 1 : 0.2);
+
+  // Dim standard links to 20% opacity
+  svgRoot.selectAll('.link').transition().duration(200)
+    .attr('stroke-opacity', 0.08)
+    .attr('stroke', 'rgba(100,116,175,0.08)');
+
+  // Update glowing rings around traversed nodes with vibrant cyan accent
+  svgRoot.selectAll('.glow-ring').each(function(d) {
+    if (d && pathSet.has(d.id)) {
+      d3.select(this)
+        .attr('stroke', '#00f3ff')
+        .attr('opacity', 0.95)
+        .attr('filter', 'url(#glow)');
+    } else {
+      const isFrz = d && (d.lock_status === 'frozen' || d.lock_status === 'partially_frozen' || d.lock_status === 'tampered');
+      d3.select(this)
+        .attr('stroke', d ? folderColor(d.group) : '#ffffff')
+        .attr('opacity', isFrz ? 0.6 : 0)
+        .attr('filter', null);
+    }
+  });
+
+  updatePathOverlay();
   updatePathNodeRings();
+}
+
+function updatePathOverlay() {
+  if (!svgRoot) return;
+  let overlayG = svgRoot.select('.path-overlay-layer');
+  if (overlayG.empty()) {
+    overlayG = svgRoot.append('g').attr('class', 'path-overlay-layer');
+  }
+
+  if (!currentPathArray || currentPathArray.length < 2) {
+    overlayG.selectAll('*').remove();
+    return;
+  }
+
+  const overlayEdges = [];
+  for (let i = 0; i < currentPathArray.length - 1; i++) {
+    const idA = currentPathArray[i];
+    const idB = currentPathArray[i + 1];
+    const nodeA = G.nodes.find(n => n.id === idA);
+    const nodeB = G.nodes.find(n => n.id === idB);
+    if (nodeA && nodeB) {
+      overlayEdges.push({ source: nodeA, target: nodeB, id: `path-edge-${i}` });
+    }
+  }
+
+  // Backing glow lines
+  const backingLines = overlayG.selectAll('line.path-glow-backing')
+    .data(overlayEdges, d => d.id);
+
+  backingLines.exit().remove();
+
+  backingLines.enter()
+    .append('line')
+    .attr('class', 'path-glow-backing')
+    .merge(backingLines)
+    .attr('x1', d => d.source.x)
+    .attr('y1', d => d.source.y)
+    .attr('x2', d => d.target.x)
+    .attr('y2', d => d.target.y);
+
+  // Animated directional dash lines
+  const animLines = overlayG.selectAll('line.path-animated-edge')
+    .data(overlayEdges, d => d.id);
+
+  animLines.exit().remove();
+
+  animLines.enter()
+    .append('line')
+    .attr('class', 'path-animated-edge')
+    .attr('marker-end', 'url(#arr-path)')
+    .merge(animLines)
+    .attr('x1', d => d.source.x)
+    .attr('y1', d => d.source.y)
+    .attr('x2', d => d.target.x)
+    .attr('y2', d => d.target.y);
+}
+
+function updatePathOverlayPositions() {
+  if (!svgRoot || !currentPathArray || currentPathArray.length < 2) return;
+  const overlayG = svgRoot.select('.path-overlay-layer');
+  if (overlayG.empty()) return;
+
+  overlayG.selectAll('line')
+    .attr('x1', d => d.source.x)
+    .attr('y1', d => d.source.y)
+    .attr('x2', d => d.target.x)
+    .attr('y2', d => d.target.y);
 }
 
 function animatePath(path) {
   path.forEach((id, i) => {
     setTimeout(() => {
-      svgRoot.select('#np-'+safeId(id)+' .glow-ring')
-        .attr('stroke','#00d4aa').attr('opacity',.9)
-        .transition().duration(500).attr('opacity',.4)
-        .transition().duration(500).attr('opacity',.9);
-    }, i * 220);
+      svgRoot.select('#np-' + safeId(id) + ' .glow-ring')
+        .attr('stroke', '#00f3ff').attr('opacity', .95)
+        .transition().duration(400).attr('opacity', .4)
+        .transition().duration(400).attr('opacity', .95);
+    }, i * 200);
   });
 }
 
 function showPathResult(path, undirected) {
   const el = document.getElementById('path-result');
+  if (!el) return;
   el.style.display = 'block';
-  document.getElementById('path-ol').innerHTML = path.map((p,i)=>{
-    const n=p.split('/').pop();
-    const pre = i===0 ? `<span style="color:var(--start-color)">▶ </span>`
-               : i===path.length-1 ? `<span style="color:var(--end-color)">■ </span>` : '';
-    return `<li>${pre}<b title="${p}">${n}</b></li>`;
-  }).join('');
-  document.getElementById('path-meta').textContent =
-    `${path.length} hop${path.length!==1?'s':''}${undirected?' (undirected)':''}`;
+
+  const container = document.getElementById('path-steps-container');
+  if (!container) return;
+
+  let html = '';
+  path.forEach((p, i) => {
+    const nodeObj = G.nodes.find(n => n.id === p);
+    const fileName = p.split('/').pop();
+    const groupName = nodeObj ? nodeObj.group : '';
+    const color = nodeObj ? folderColor(groupName) : '#00f3ff';
+    const isStart = i === 0;
+    const isEnd = i === path.length - 1;
+
+    const stepClass = isStart ? 'start-step' : (isEnd ? 'end-step' : 'mid-step');
+    const badgeText = isStart ? 'START' : (isEnd ? 'END' : `STEP ${i+1}`);
+
+    html += `
+      <div class="path-step-card ${stepClass}">
+        <div class="path-step-num">${i + 1}</div>
+        <div class="path-step-info">
+          <div class="path-step-title" title="${p}">${fileName}</div>
+          <div class="path-step-meta">
+            <span class="path-step-group" style="background:${color}22; color:${color}; border:1px solid ${color}44;">${groupName || 'file'}</span>
+            <span class="path-step-tag">${badgeText}</span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    if (i < path.length - 1) {
+      html += `
+        <div class="path-connector">
+          <div class="path-line-track"></div>
+          <div class="path-arrow-down">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#00f3ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="4" x2="12" y2="20"></line>
+              <polyline points="19 13 12 20 5 13"></polyline>
+            </svg>
+          </div>
+        </div>
+      `;
+    }
+  });
+
+  container.innerHTML = html;
+
+  const metaEl = document.getElementById('path-meta');
+  if (metaEl) {
+    metaEl.innerHTML = `<span>Path Distance: <b>${path.length - 1} hop${path.length - 1 !== 1 ? 's' : ''} (${path.length} nodes)</b></span>` + 
+                       (undirected ? ` · <span style="color:#fbbf24;">(undirected)</span>` : '');
+  }
 }
 
 function clearPath() {
-  pathStart=null; pathEnd=null; pathSet=new Set();
-  document.getElementById('lbl-start').textContent='— start';
-  document.getElementById('lbl-end').textContent='end —';
+  pathStart = null;
+  pathEnd = null;
+  pathSet = new Set();
+  currentPathArray = [];
+
+  if (svgRoot) {
+    svgRoot.select('.path-overlay-layer').selectAll('*').remove();
+    svgRoot.selectAll('.node-pill').attr('opacity', 1);
+  }
+
+  document.getElementById('lbl-start').textContent = '— start';
+  document.getElementById('lbl-end').textContent = 'end —';
   document.getElementById('btn-find-path').classList.remove('ready');
   document.getElementById('btn-clear-path').classList.remove('show');
-  document.getElementById('path-result').style.display='none';
+
+  const el = document.getElementById('path-result');
+  if (el) el.style.display = 'none';
+
   resetStyle();
 }
 
@@ -1409,6 +2344,540 @@ async function toggleLock() {
   } catch (err) {
       console.error('Error toggling freeze: ' + err);
   }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  TAB SWITCHING & SESSION MEMORY VIEW
+// ═══════════════════════════════════════════════════════════════
+let activePanelTab = 'node';
+
+function updatePanelTabsVisibility() {
+  const tabsBar = document.getElementById('panel-tabs');
+  const nodeBtn = document.getElementById('tab-btn-node');
+  if (!tabsBar || !nodeBtn) return;
+
+  if (selId) {
+    tabsBar.style.display = 'flex';
+    nodeBtn.style.display = '';
+  } else {
+    tabsBar.style.display = 'none';
+    nodeBtn.style.display = 'none';
+  }
+}
+
+function switchPanelTab(tab) {
+  activePanelTab = tab;
+  document.getElementById('panel').classList.add('open');
+  
+  const nodeBtn = document.getElementById('tab-btn-node');
+  const sessBtn = document.getElementById('tab-btn-session');
+  const nodeView = document.getElementById('node-view');
+  const sessView = document.getElementById('session-view');
+
+  updatePanelTabsVisibility();
+
+  if (tab === 'session' || !selId) {
+    nodeBtn.classList.remove('active');
+    sessBtn.classList.add('active');
+    nodeView.style.display = 'none';
+    sessView.classList.add('open');
+    fetchSessionData();
+  } else {
+    sessBtn.classList.remove('active');
+    nodeBtn.classList.add('active');
+    sessView.classList.remove('open');
+    nodeView.style.display = 'flex';
+  }
+}
+
+async function fetchSessionData() {
+  try {
+    const res = await fetch('/api/session/active');
+    if (!res.ok) return;
+    const data = await res.json();
+    renderSessionView(data);
+  } catch (err) {
+    console.error('Error fetching active session:', err);
+  }
+}
+
+let currentSessionActions = [];
+
+function getActionMetrics(a) {
+  const comp = a.compressed_tokens || a.tokens_used || 0;
+  let saved = a.tokens_saved || 0;
+  let orig = a.original_tokens || 0;
+  if (orig <= 0 && (comp > 0 || saved > 0)) {
+    orig = comp + saved;
+  }
+  if (orig <= 0 && comp > 0) {
+    orig = Math.round(comp / 0.10);
+    saved = orig - comp;
+  }
+  if (saved <= 0 && orig > comp) {
+    saved = orig - comp;
+  }
+  let reduction = a.reduction_percent || 0;
+  if (reduction <= 0 && orig > 0) {
+    reduction = (saved / orig) * 100;
+  }
+  return { comp, saved, orig, reduction };
+}
+
+function renderActionCardHTML(a) {
+  const timeStr = a.timestamp ? (a.timestamp.includes('T') ? a.timestamp.substring(11, 19) : a.timestamp) : '';
+  const desc = a.description || 'Context built for task';
+  const outcomeClass = a.outcome === 'blocked' ? 'badge-active' : 'badge-success';
+  const outcomeText = (a.outcome === 'blocked' ? 'BLOCKED' : 'SUCCESS');
+  const metrics = getActionMetrics(a);
+  const tokensStr = metrics.comp ? ` - ${metrics.comp.toLocaleString()} tokens` : '';
+  
+  return `
+    <div class="recent-card" onclick="openActionDetailsModal('${a.action_id}')">
+      <div class="recent-hdr">
+        <span class="recent-name">Context Build</span>
+        <span class="${outcomeClass}">${outcomeText}</span>
+      </div>
+      <div class="recent-desc">${desc}</div>
+      <div class="recent-meta">${timeStr}${tokensStr}</div>
+    </div>
+  `;
+}
+
+function renderSessionView(data) {
+  const sessId = data.session_id || 'active_session';
+  const used = data.total_tokens_used || 0;
+  const saved = data.total_tokens_saved || 0;
+  const ratio = Math.round((data.compression_ratio || 0) * 100);
+
+  document.getElementById('sess-id-val').textContent = sessId;
+  document.getElementById('sess-pct-val').textContent = `${ratio}%`;
+  document.getElementById('sess-used-val').textContent = used.toLocaleString();
+  document.getElementById('sess-saved-val').textContent = saved.toLocaleString();
+
+  const actions = data.session?.actions || [];
+  currentSessionActions = actions;
+  const recentList = document.getElementById('recent-actions-list');
+  document.getElementById('recent-count-badge').textContent = actions.length;
+
+  if (actions.length === 0) {
+    recentList.innerHTML = `<div style="font-size:0.75rem; color:var(--text-dim); font-style:italic;">No session actions recorded yet.</div>`;
+  } else {
+    const sortedNewestFirst = actions.slice().reverse();
+    const top5Recent = sortedNewestFirst.slice(0, 5);
+    recentList.innerHTML = top5Recent.map(a => renderActionCardHTML(a)).join('');
+  }
+
+  drawSavingsChart(actions, saved);
+}
+
+function openAllActionsModal() {
+  const modal = document.getElementById('all-actions-modal');
+  const container = document.getElementById('all-actions-list');
+  if (!modal || !container) return;
+
+  if (!currentSessionActions || currentSessionActions.length === 0) {
+    container.innerHTML = `<div style="font-size:0.75rem; color:var(--text-dim); font-style:italic;">No session actions recorded yet.</div>`;
+  } else {
+    const sortedNewestFirst = currentSessionActions.slice().reverse();
+    container.innerHTML = sortedNewestFirst.map(a => renderActionCardHTML(a)).join('');
+  }
+
+  modal.classList.add('open');
+}
+
+function closeAllActionsModal() {
+  const modal = document.getElementById('all-actions-modal');
+  if (modal) modal.classList.remove('open');
+}
+
+function openActionDetailsModal(actionId) {
+  const modal = document.getElementById('action-details-modal');
+  const content = document.getElementById('action-details-content');
+  if (!modal || !content) return;
+
+  const action = currentSessionActions.find(a => a.action_id === actionId) || 
+                 currentSessionActions.find(a => String(a.action_id) === String(actionId));
+
+  if (!action) {
+    content.innerHTML = `<div style="font-size:0.8rem; color:var(--text-dim);">Activity details not found.</div>`;
+    modal.classList.add('open');
+    return;
+  }
+
+  let taskTitle = action.description || 'Context built for task';
+  if (taskTitle.startsWith('Context built for task: ')) {
+    taskTitle = taskTitle.substring('Context built for task: '.length);
+  } else if (taskTitle.startsWith('Started session for task: ')) {
+    taskTitle = taskTitle.substring('Started session for task: '.length);
+  }
+
+  const metrics = getActionMetrics(action);
+  const origTokens = metrics.orig;
+  const compTokens = metrics.comp;
+  const tokensSaved = metrics.saved;
+  const redPct = Math.round(metrics.reduction);
+
+  const outcomeClass = action.outcome === 'blocked' ? 'badge-active' : 'badge-success';
+  const outcomeText = (action.outcome === 'blocked' ? 'BLOCKED' : 'SUCCESS');
+  const timestampStr = action.timestamp ? (action.timestamp.includes('T') ? action.timestamp.replace('T', ' ').substring(0, 19) : action.timestamp) : 'N/A';
+
+  content.innerHTML = `
+    <div style="display:flex; flex-direction:column; gap:14px;">
+      <div style="background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:14px;">
+        <div style="font-size:0.7rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px; font-weight:600; margin-bottom:4px;">Task</div>
+        <div style="font-size:0.95rem; font-weight:600; color:var(--text); line-height:1.4;">${taskTitle}</div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div style="background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:12px;">
+          <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px;">Original Input Tokens</div>
+          <div style="font-size:1.1rem; font-weight:700; color:var(--text);">${origTokens.toLocaleString()}</div>
+        </div>
+        <div style="background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:12px;">
+          <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px;">Compressed Input Tokens</div>
+          <div style="font-size:1.1rem; font-weight:700; color:#60a5fa;">${compTokens.toLocaleString()}</div>
+        </div>
+        <div style="background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:12px;">
+          <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px;">Input Tokens Saved</div>
+          <div style="font-size:1.1rem; font-weight:700; color:#4ade80;">${tokensSaved.toLocaleString()}</div>
+        </div>
+        <div style="background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:12px;">
+          <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px;">Compression</div>
+          <div style="font-size:1.1rem; font-weight:700; color:#34d399;">${redPct}% reduction</div>
+        </div>
+      </div>
+
+      <div style="background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:12px; font-size:0.75rem; color:var(--text-muted); display:flex; flex-direction:column; gap:6px;">
+        <div style="display:flex; justify-content:space-between;">
+          <span>Timestamp:</span>
+          <span style="color:var(--text); font-family:'JetBrains Mono', monospace;">${timestampStr}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span>Action Type:</span>
+          <span style="color:var(--text); text-transform:uppercase;">${action.action_type || 'query'}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span>Outcome:</span>
+          <span class="${outcomeClass}">${outcomeText}</span>
+        </div>
+        ${action.file_path ? `<div style="display:flex; justify-content:space-between;"><span>File Path:</span><span style="color:var(--text); font-family:'JetBrains Mono', monospace;">${action.file_path}</span></div>` : ''}
+        ${action.action_id ? `<div style="display:flex; justify-content:space-between;"><span>Action ID:</span><span style="color:var(--text-dim); font-family:'JetBrains Mono', monospace; font-size:0.7rem;">${action.action_id}</span></div>` : ''}
+      </div>
+    </div>
+  `;
+
+  modal.classList.add('open');
+}
+
+function closeActionDetailsModal() {
+  const modal = document.getElementById('action-details-modal');
+  if (modal) modal.classList.remove('open');
+}
+
+function drawSavingsChart(actions, currentTotalSaved) {
+  const canvas = document.getElementById('savings-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width = canvas.parentElement.clientWidth || 260;
+  const h = canvas.height = canvas.parentElement.clientHeight || 115;
+
+  ctx.clearRect(0, 0, w, h);
+
+  let points = [15000, 16500, 18400, Math.max(20000, currentTotalSaved)];
+  if (actions && actions.length > 0) {
+    let cum = 15000;
+    points = [cum];
+    actions.forEach(a => {
+      cum += (a.tokens_saved || 400);
+      points.push(cum);
+    });
+    if (points.length > 8) points = points.slice(-8);
+  }
+
+  const maxVal = Math.max(...points, 25000);
+  const minVal = 0;
+
+  const padL = 30, padR = 10, padT = 15, padB = 20;
+  const graphW = w - padL - padR;
+  const graphH = h - padT - padB;
+
+  ctx.strokeStyle = '#252840';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padL, padT);
+  ctx.lineTo(w - padR, padT);
+  ctx.moveTo(padL, padT + graphH / 2);
+  ctx.lineTo(w - padR, padT + graphH / 2);
+  ctx.moveTo(padL, h - padB);
+  ctx.lineTo(w - padR, h - padB);
+  ctx.stroke();
+
+  ctx.fillStyle = '#4a5075';
+  ctx.font = '9px JetBrains Mono, monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText(Math.round(maxVal / 1000) + 'k', padL - 4, padT + 3);
+  ctx.fillText(Math.round((maxVal / 2) / 1000) + 'k', padL - 4, padT + graphH / 2 + 3);
+  ctx.fillText('0', padL - 4, h - padB + 3);
+
+  const coords = points.map((val, idx) => {
+    const x = padL + (idx / (points.length - 1 || 1)) * graphW;
+    const y = h - padB - ((val - minVal) / (maxVal - minVal)) * graphH;
+    return { x, y };
+  });
+
+  const grad = ctx.createLinearGradient(0, padT, 0, h - padB);
+  grad.addColorStop(0, 'rgba(52, 211, 153, 0.35)');
+  grad.addColorStop(1, 'rgba(52, 211, 153, 0.02)');
+
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.moveTo(coords[0].x, h - padB);
+  coords.forEach(pt => ctx.lineTo(pt.x, pt.y));
+  ctx.lineTo(coords[coords.length - 1].x, h - padB);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = '#34d399';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  coords.forEach((pt, i) => {
+    if (i === 0) ctx.moveTo(pt.x, pt.y);
+    else ctx.lineTo(pt.x, pt.y);
+  });
+  ctx.stroke();
+
+  coords.forEach(pt => {
+    ctx.fillStyle = '#34d399';
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#0d0f18';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  });
+}
+
+function openBuildContextModal() {
+  document.getElementById('build-context-modal').classList.add('open');
+  document.getElementById('task-input-text').focus();
+  document.getElementById('task-result-box').style.display = 'none';
+}
+
+function closeBuildContextModal() {
+  document.getElementById('build-context-modal').classList.remove('open');
+}
+
+async function submitBuildContextTask() {
+  const input = document.getElementById('task-input-text');
+  const taskText = input.value.trim();
+  if (!taskText) {
+    alert('Please enter a task description.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-run-build-task');
+  btn.textContent = 'Compressing...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/session/build_context', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ task: taskText })
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+
+    const stats = data.context?.token_stats || {};
+    const box = document.getElementById('task-result-box');
+    const summary = document.getElementById('task-stats-summary');
+
+    summary.innerHTML = `
+      <div><b>Task:</b> ${taskText}</div>
+      <div><b>Original Input Tokens:</b> ${stats.original_input_tokens?.toLocaleString() || 0}</div>
+      <div><b>Compressed Input Tokens:</b> <span style="color:#38bdf8; font-weight:700;">${stats.compressed_input_tokens?.toLocaleString() || 0}</span></div>
+      <div><b>Input Tokens Saved:</b> <span style="color:#34d399; font-weight:700;">${stats.input_tokens_saved?.toLocaleString() || 0} (${Math.round(stats.input_reduction_percent || 0)}% reduction)</span></div>
+      <div><b>Max Output Limit:</b> ${stats.max_output_tokens?.toLocaleString() || 1024} tokens</div>
+    `;
+    box.style.display = 'block';
+
+    if (data.session_summary) {
+      renderSessionView(data.session_summary);
+    } else {
+      fetchSessionData();
+    }
+  } catch (err) {
+    alert('Error building context: ' + err.message);
+  } finally {
+    btn.textContent = '⚡ Compress Context';
+    btn.disabled = false;
+  }
+}
+
+let compactMode = false;
+function toggleCompactMode() {
+  compactMode = !compactMode;
+  document.body.classList.toggle('compact-mode', compactMode);
+  const btn = document.getElementById('btn-compact-mode');
+  if (btn) btn.classList.toggle('active', compactMode);
+
+  // Workspace Auto-Focus: Automatically close open floating drawers
+  if (compactMode) {
+    const fFilters = document.getElementById('flyout-filters');
+    const fPeek = document.getElementById('flyout-peek');
+    const btnFilters = document.getElementById('act-btn-filters');
+    const btnPeek = document.getElementById('act-btn-peek');
+    if (fFilters) fFilters.style.display = 'none';
+    if (fPeek) fPeek.style.display = 'none';
+    if (btnFilters) btnFilters.classList.remove('active');
+    if (btnPeek) btnPeek.classList.remove('active');
+  }
+
+  applyFilter();
+}
+
+function toggleFlyout(name) {
+  const fFilters = document.getElementById('flyout-filters');
+  const fPeek = document.getElementById('flyout-peek');
+  const btnFilters = document.getElementById('act-btn-filters');
+  const btnPeek = document.getElementById('act-btn-peek');
+
+  if (name === 'filters') {
+    const isVisible = fFilters.style.display !== 'none';
+    fFilters.style.display = isVisible ? 'none' : 'flex';
+    btnFilters.classList.toggle('active', !isVisible);
+  } else if (name === 'peek') {
+    const isVisible = fPeek.style.display !== 'none';
+    fPeek.style.display = isVisible ? 'none' : 'flex';
+    btnPeek.classList.toggle('active', !isVisible);
+  }
+}
+
+function selectFlyoutCategory(cat, el) {
+  if (cat === 'all') {
+    selectedCategories = new Set(['all']);
+    document.querySelectorAll('.fly-cat-item').forEach(item => item.classList.remove('active'));
+    if (el) el.classList.add('active');
+  } else {
+    selectedCategories.delete('all');
+    const allEl = document.querySelector('.fly-cat-item[data-cat="all"]');
+    if (allEl) allEl.classList.remove('active');
+
+    if (selectedCategories.has(cat)) {
+      selectedCategories.delete(cat);
+      if (el) el.classList.remove('active');
+      if (selectedCategories.size === 0) {
+        selectedCategories.add('all');
+        if (allEl) allEl.classList.add('active');
+      }
+    } else {
+      selectedCategories.add(cat);
+      if (el) el.classList.add('active');
+    }
+  }
+  applyFilter();
+}
+
+function highlightFrozenOnCanvas() {
+  if (!G || !svgRoot) return;
+  const frozenNodes = G.nodes.filter(n => n.lock_status === 'frozen' || n.lock_status === 'partially_frozen');
+  if (frozenNodes.length === 0) {
+    alert('No files are currently frozen.');
+    return;
+  }
+  const frozenIds = frozenNodes.map(n => n.id);
+  pathSet = new Set(frozenIds);
+  applyPathStyle(frozenIds);
+}
+
+async function clearAllFrozenFiles() {
+  if (!G) return;
+  const frozenNodes = G.nodes.filter(n => n.lock_status === 'frozen' || n.lock_status === 'partially_frozen');
+  if (frozenNodes.length === 0) {
+    alert('No files are currently frozen.');
+    return;
+  }
+  const frozenIds = frozenNodes.map(n => n.id);
+  try {
+    await fetch('/api/ledger/unlock_batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file_paths: frozenIds })
+    });
+    await refreshGraphState();
+  } catch (err) {
+    console.error('Error clearing frozen files:', err);
+  }
+}
+
+function toggleImpactFilter(el) {
+  impactFilterActive = !impactFilterActive;
+  const badge = document.getElementById('impact-badge-lbl');
+  if (badge) {
+    badge.textContent = impactFilterActive ? 'ON' : 'OFF';
+    badge.style.background = impactFilterActive ? 'rgba(251,191,36,0.35)' : 'rgba(251,191,36,0.15)';
+    badge.style.color = impactFilterActive ? '#fbbf24' : 'inherit';
+  }
+  applyFilter();
+}
+
+function filterByTreeFolder(folderName, el) {
+  if (el) {
+    document.querySelectorAll('.tree-item').forEach(item => item.classList.remove('active'));
+    el.classList.add('active');
+  }
+  folderFlt = folderName;
+  const pill = document.querySelector(`.filter-pill[data-folder="${folderName}"]`);
+  if (pill) {
+    document.querySelectorAll('#folder-filters .filter-pill').forEach(p=>p.classList.remove('active'));
+    pill.classList.add('active');
+  }
+  applyFilter();
+}
+
+function toggleTraceAccordion() {
+  const body = document.getElementById('trace-acc-body');
+  const arrow = document.getElementById('trace-acc-arrow');
+  if (!body) return;
+  const isHidden = body.style.display === 'none';
+  body.style.display = isHidden ? 'flex' : 'none';
+  if (arrow) arrow.textContent = isHidden ? '▲' : '▼';
+}
+
+function runTraceLinksDemo() {
+  if (!svgRoot || !G) return;
+  const traceNodes = G.nodes.filter(n => n.group === 'core' || n.group === 'api' || n.group === 'graph').map(n => n.id);
+  pathSet = new Set(traceNodes);
+  applyPathStyle(traceNodes);
+}
+
+function highlightTopHubInGraph() {
+  if (!G) return;
+  const topHub = (G.stats?.most_connected_file) || 'logger.py';
+  const targetNode = G.nodes.find(n => n.id === topHub || n.id.endsWith(topHub));
+  if (targetNode) {
+    highlightNode(targetNode.id);
+  }
+}
+
+function showAllLinksOnCanvas() {
+  pathSet = new Set();
+  q = '';
+  folderFlt = 'all';
+  lockFlt = 'all';
+  impactFilterActive = false;
+  const badge = document.getElementById('impact-badge-lbl');
+  if (badge) {
+    badge.textContent = 'OFF';
+    badge.style.background = 'rgba(251,191,36,0.15)';
+  }
+  document.querySelectorAll('#folder-filters .filter-pill').forEach(p => p.classList.remove('active'));
+  const allPill = document.querySelector('#folder-filters .filter-pill[data-folder="all"]');
+  if (allPill) allPill.classList.add('active');
+  resetStyle();
+  applyFilter();
 }
 
 // ── Start ──────────────────────────────────────────────────────

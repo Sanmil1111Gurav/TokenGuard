@@ -16,8 +16,10 @@ logging.basicConfig(
 
 logger = logging.getLogger("TokenGuard")
 
-def get_logger():
+def get_logger(name: str = None):
     """Get the standard TokenGuard logger."""
+    if name:
+        return logging.getLogger(f"TokenGuard.{name}")
     return logger
 
 @contextmanager

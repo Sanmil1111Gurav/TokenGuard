@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "tokenguard": {
+      "command": "s:/React/TokenGuard2/TokenGuard/.venv/Scripts/python.exe",
+      "args": [
+        "s:/React/TokenGuard2/TokenGuard/mcp_server/server.py"
+      ],
+      "env": {
+        "PYTHONPATH": "s:/React/TokenGuard2/TokenGuard"
+      }
+    }
+  }
+}

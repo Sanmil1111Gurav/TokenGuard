@@ -1,9 +1,9 @@
 # ── Secrets & Environment ─────────────────────────────────────────
 .env
-.env.example
 .env.local
 .env.*.local
 *.env
+!.env.example
 
 # ── Virtual Environment ───────────────────────────────────────────
 .venv/
@@ -61,7 +61,11 @@ Thumbs.db
 desktop.ini
 ehthumbs.db
 
+# ── Research Paper (do not push to git) ───────────────────────────
+Research_paper/
+Research_paper__Copy_/
+Research_paper*/
 
-
-prompt_compression/
-sessions/
+# ── Session Runtime Data (logs & state dumps) ─────────────────────
+sessions/*.json
+

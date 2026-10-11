@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tokenguard"
+version = "0.1.0"
+description = "TokenGuard: Context Window Reduction & Code Edit Protection Middleware for AI Coding Agents"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "tree-sitter>=0.21.0",
+    "tree-sitter-python>=0.21.0",
+    "tree-sitter-javascript>=0.21.0",
+    "networkx>=3.0",
+    "chromadb>=0.4.20",
+    "openai>=1.0.0",
+    "langchain-openai>=0.1.0",
+    "python-dotenv>=1.0.0",
+    "rich>=13.0.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.20.0",
+    "pytest>=7.0.0",
+    "mcp>=1.0.0",
+]
+
+[project.scripts]
+tokenguard = "main:main"
+
+[tool.setuptools]
+py-modules = ["main"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["core*", "graph*", "ledger*", "prompt_compression*", "sessions*", "utils*", "config*", "api*", "mcp_server*"]

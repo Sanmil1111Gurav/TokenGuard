@@ -55,22 +55,26 @@ class SessionStore:
         self._active_sessions: Dict[str, Session] = {}
 
     def get_active_session(self, project_root: str) -> Optional[Session]:
-        norm_root = str(Path(project_root).resolve())
-        if norm_root in self._active_sessions:
-            return self._active_sessions[norm_root]
+        norm_root = str(Path(project_root).resolve()).lower()
+        for r, s in self._active_sessions.items():
+            if r.lower() == norm_root:
+                return s
         
         # Check disk for latest session file
         session_files = sorted(self.storage_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
         for sf in session_files:
             try:
                 data = json.loads(sf.read_text(encoding="utf-8"))
-                if str(Path(data.get("project_root", "")).resolve()) == norm_root:
+                # Match root or accept session stored in this project's folder
+                p = str(Path(data.get("project_root", "")).resolve()).lower()
+                if p == norm_root or sf.parent == self.storage_dir:
                     session = Session.from_dict(data)
                     self._active_sessions[norm_root] = session
                     return session
             except Exception:
                 pass
         return None
+
 
     def save_session(self, session: Session):
         norm_root = str(Path(session.project_root).resolve())
@@ -152,11 +156,26 @@ class SessionManager:
                 "total_actions": 0,
                 "total_tokens_used": 0,
                 "total_tokens_saved": 0,
+                "compression_ratio": 0.0,
+                "reduction_percent": 0.0,
+                "changed_files": [],
                 "recent_actions": [],
             }
 
         total_used = sum(a.tokens_used for a in session.actions)
         total_saved = sum(a.tokens_saved for a in session.actions)
+        if (total_saved + total_used) > 0:
+            compression_ratio = round(total_saved / (total_saved + total_used), 3)
+            reduction_percent = round((total_saved / (total_saved + total_used)) * 100.0, 1)
+        else:
+            compression_ratio = 0.0
+            reduction_percent = 0.0
+
+        changed_files = []
+        for a in session.actions:
+            if a.file_path and a.file_path not in changed_files:
+                changed_files.append(a.file_path)
+
         return {
             "session_id": session.session_id,
             "project_root": session.project_root,
@@ -165,5 +184,9 @@ class SessionManager:
             "total_actions": len(session.actions),
             "total_tokens_used": total_used,
             "total_tokens_saved": total_saved,
-            "recent_actions": [a.to_dict() for a in session.actions[-10:]],
+            "compression_ratio": compression_ratio,
+            "reduction_percent": reduction_percent,
+            "changed_files": changed_files,
+            "recent_actions": [a.to_dict() for a in session.actions[-20:]],
         }
+

@@ -107,26 +107,45 @@ def _parse_python_regex(content: str) -> tuple[List[str], List[str], List[str]]:
 
 
 def _parse_js_regex(content: str) -> tuple[List[str], List[str], List[str]]:
-    """Regex fallback for JS/TS imports, functions, classes."""
+    """Comprehensive regex parser for JS/TS imports, exports, functions, and classes."""
     imports = []
     functions = []
     classes = []
 
-    # Imports: import ... from 'path', import 'path', require('path'), import('path')
-    import_patterns = [
-        r'import\s+(?:.*?\s+from\s+)?[\'"]([^\'"]+)[\'"]',
-        r'require\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)',
-        r'import\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)'
+    # Strip line comments to avoid false matches inside comments
+    clean_lines = []
+    for line in content.splitlines():
+        line_s = line.strip()
+        if line_s.startswith("//"):
+            continue
+        clean_lines.append(line)
+    clean_content = "\n".join(clean_lines)
+
+    # 1. Imports and re-exports:
+    # Handles:
+    # import { X } from './X'
+    # import type { X } from '@/types'
+    # export { X } from './X'
+    # export * from './X'
+    # export * as Y from './X'
+    imp_from_patterns = [
+        # import / export ... from '...' (including multiline braces)
+        r'(?:import|export)\s+(?:type\s+)?(?:[\s\S]*?\s+from\s+)[\'"]([^\'"]+)[\'"]',
+        # Bare imports: import './styles.css'
+        r'import\s+[\'"]([^\'"]+)[\'"]',
+        # Dynamic import / CommonJS require: import('./foo') or require('./foo')
+        r'(?:require|import)\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)'
     ]
-    for pattern in import_patterns:
-        for match in re.finditer(pattern, content, re.DOTALL):
-            imp = match.group(1)
+
+    for pattern in imp_from_patterns:
+        for match in re.finditer(pattern, clean_content):
+            imp = match.group(1).strip()
             if imp:
                 imports.append(imp)
 
-    # Functions: function foo() or const foo = () => or const foo = function()
+    # Functions: function foo() or const foo = () => or const foo = function() or export function
     func_matches = re.findall(
-        r'(?:function\s+([a-zA-Z_]\w*)|(?:const|let|var)\s+([a-zA-Z_]\w*)\s*=\s*(?:async\s*)?(?:\([^)]*\)|[a-zA-Z_]\w*)\s*=>|(?:const|let|var)\s+([a-zA-Z_]\w*)\s*=\s*(?:async\s*)?function)',
+        r'(?:(?:export\s+)?(?:async\s+)?function\s+([a-zA-Z_]\w*)|(?:const|let|var)\s+([a-zA-Z_]\w*)\s*=\s*(?:async\s*)?(?:\([^)]*\)|[a-zA-Z_]\w*)\s*=>|(?:const|let|var)\s+([a-zA-Z_]\w*)\s*=\s*(?:async\s*)?function)',
         content
     )
     for m in func_matches:
@@ -134,7 +153,7 @@ def _parse_js_regex(content: str) -> tuple[List[str], List[str], List[str]]:
         if fn:
             functions.append(fn)
 
-    # Classes: class Foo
+    # Classes: class Foo or export class Foo
     class_matches = re.findall(r'\bclass\s+([a-zA-Z_]\w*)\b', content)
     for c in class_matches:
         classes.append(c)
@@ -169,18 +188,22 @@ def _parse_with_treesitter(content_bytes: bytes, language: str) -> Optional[tupl
         def traverse(node):
             node_type = node.type
 
-            # Python & JS AST Node checks
+            # Python AST Node checks
             if node_type in ["import_statement", "import_from_statement"]:
                 text = node.text.decode("utf-8", errors="ignore")
                 match = re.search(r'from\s+([\w\.]+)|import\s+([\w\.]+)', text)
                 if match:
                     imports.append(match.group(1) or match.group(2))
-            elif node_type in ["import_declaration", "call_expression"]:
+            elif node_type in [
+                "import_declaration", "export_statement",
+                "export_named_declaration", "export_all_declaration",
+                "call_expression", "import_expression"
+            ]:
                 text = node.text.decode("utf-8", errors="ignore")
-                # Match ES6 import or CommonJS require/dynamic import
-                m1 = re.search(r'from\s+[\'"]([^\'"]+)[\'"]|import\s+[\'"]([^\'"]+)[\'"]', text)
+                # Match ES6 import/export or CommonJS require/dynamic import
+                m1 = re.search(r'(?:from|import)\s+[\'"]([^\'"]+)[\'"]', text)
                 if m1:
-                    imports.append(m1.group(1) or m1.group(2))
+                    imports.append(m1.group(1))
                 m2 = re.search(r'(?:require|import)\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)', text)
                 if m2:
                     imports.append(m2.group(1))
@@ -215,7 +238,7 @@ def _parse_with_treesitter(content_bytes: bytes, language: str) -> Optional[tupl
 
 def parse_file(project_root: str, relative_path: str) -> ParsedFileMetadata:
     """
-    Parse a single file using Tree-Sitter with Regex fallback.
+    Parse a single file using Tree-Sitter and Regex fallback, merging results for maximum accuracy.
     
     Args:
         project_root: Absolute root path of the project.
@@ -242,17 +265,23 @@ def parse_file(project_root: str, relative_path: str) -> ParsedFileMetadata:
     code_preview = "\n".join(lines[:100])
     summary = _extract_summary_regex(content, language)
 
-    # Try Tree-Sitter AST Parsing
+    # Tree-Sitter AST Parsing
     ts_result = _parse_with_treesitter(content.encode("utf-8"), language)
-    
-    if ts_result is not None:
-        imports, functions, classes = ts_result
+
+    # Regex Parsing
+    if language == "python":
+        reg_imports, reg_functions, reg_classes = _parse_python_regex(content)
     else:
-        # Regex Fallback
-        if language == "python":
-            imports, functions, classes = _parse_python_regex(content)
-        else:
-            imports, functions, classes = _parse_js_regex(content)
+        reg_imports, reg_functions, reg_classes = _parse_js_regex(content)
+
+    if ts_result is not None:
+        ts_imports, ts_functions, ts_classes = ts_result
+        # Merge AST and Regex results so syntax variations (TypeScript types, re-exports) are not missed
+        imports = list(dict.fromkeys(ts_imports + reg_imports))
+        functions = list(dict.fromkeys(ts_functions + reg_functions))
+        classes = list(dict.fromkeys(ts_classes + reg_classes))
+    else:
+        imports, functions, classes = reg_imports, reg_functions, reg_classes
 
     return ParsedFileMetadata(
         file_path=relative_path,

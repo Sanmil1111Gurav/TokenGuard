@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from pathlib import Path
 from typing import List, Dict, Optional, Set
 import networkx as nx
@@ -9,19 +10,78 @@ from utils.logger import get_logger, log_step
 
 logger = get_logger()
 
+# Common web and backend source file extensions
+CANDIDATE_EXTENSIONS = [
+    "",
+    ".tsx",
+    ".ts",
+    ".jsx",
+    ".js",
+    ".py",
+    "/index.tsx",
+    "/index.ts",
+    "/index.jsx",
+    "/index.js",
+    "/index.py",
+    ".json",
+    ".css",
+    ".scss",
+    ".module.css",
+    ".module.scss",
+    ".d.ts"
+]
+
+
+def _parse_tsconfig_paths(project_root: Optional[str]) -> Dict[str, List[str]]:
+    """Parse compilerOptions.paths from tsconfig.json or jsconfig.json if present."""
+    if not project_root:
+        return {}
+    for filename in ["tsconfig.json", "jsconfig.json"]:
+        conf_path = Path(project_root) / filename
+        if conf_path.exists():
+            try:
+                with open(conf_path, "r", encoding="utf-8", errors="ignore") as f:
+                    text = f.read()
+                # Strip comments for jsonc
+                text_clean = re.sub(r'//.*', '', text)
+                text_clean = re.sub(r'/\*.*?\*/', '', text_clean, flags=re.DOTALL)
+                data = json.loads(text_clean)
+                compiler_opts = data.get("compilerOptions", {})
+                paths = compiler_opts.get("paths", {})
+                if paths:
+                    return paths
+            except Exception as e:
+                logger.debug(f"Could not parse {filename}: {e}")
+    return {}
+
 
 def resolve_import_path(
     current_file: str,
     import_str: str,
-    all_files: Set[str]
+    all_files: Set[str],
+    project_root: Optional[str] = None,
+    tsconfig_paths: Optional[Dict[str, List[str]]] = None,
+    all_files_lower: Optional[Dict[str, str]] = None
 ) -> Optional[str]:
     """
     Resolve an import statement string to an actual file path in the project.
     
+    Supports:
+      - Relative imports (./foo, ../bar)
+      - Path aliases (@/components/..., ~/lib/...)
+      - tsconfig.json / jsconfig.json custom path mappings
+      - Barrel file indexes (/index.tsx, /index.ts, /index.jsx, /index.js)
+      - Non-relative root or src-based imports
+      - Python module dot notation (core.parser -> core/parser.py)
+      - Case-insensitive Windows path resolution fallback
+    
     Args:
         current_file: Relative path of the file containing the import.
-        import_str: Raw import string (e.g. "./auth", "src.db.connection", "../utils/logger").
+        import_str: Raw import string.
         all_files: Set of all valid relative file paths in the project.
+        project_root: Optional absolute root directory.
+        tsconfig_paths: Optional pre-parsed tsconfig compilerOptions.paths.
+        all_files_lower: Optional pre-built lowercased file lookup dictionary.
         
     Returns:
         Resolved relative file path if matched in project, else None.
@@ -32,12 +92,13 @@ def resolve_import_path(
     current_dir = Path(current_file).parent
     possible_paths: List[Path] = []
 
+    if all_files_lower is None:
+        all_files_lower = {f.lower(): f for f in all_files}
+
     # 1. Relative import starting with . or ..
     if import_str.startswith("."):
-        # Convert module dots in relative imports if any (e.g., ..utils.logger -> ../utils/logger)
         clean_imp = import_str
         if not ("/" in clean_imp or "\\" in clean_imp):
-            # E.g. .auth -> ./auth or ..utils -> ../utils
             if clean_imp.startswith(".."):
                 clean_imp = "../" + clean_imp[2:].lstrip(".").replace(".", "/")
             elif clean_imp.startswith("."):
@@ -46,21 +107,53 @@ def resolve_import_path(
         target = current_dir / clean_imp
         possible_paths.append(target)
     else:
-        # 2. Package / module style import (e.g., src.auth.login or auth/login)
-        path_from_str = import_str.replace(".", "/")
-        possible_paths.append(current_dir / path_from_str)
-        possible_paths.append(Path(path_from_str))
+        # 2. Check custom tsconfig path aliases if configured
+        if tsconfig_paths:
+            for alias_pattern, target_patterns in tsconfig_paths.items():
+                prefix = alias_pattern.replace("*", "")
+                if import_str.startswith(prefix):
+                    suffix = import_str[len(prefix):]
+                    for tgt_pat in target_patterns:
+                        resolved_cand = tgt_pat.replace("*", suffix).lstrip("./").lstrip(".\\")
+                        possible_paths.append(Path(resolved_cand))
 
-    # Candidate extensions to attempt
-    extensions = ["", ".py", ".js", ".ts", ".jsx", ".tsx", "/index.js", "/index.ts", "/index.py"]
+        # 3. Built-in Next.js / Vite / React path aliases (@/* and ~/*)
+        if import_str.startswith("@/") or import_str.startswith("~/"):
+            stripped = import_str[2:]
+            possible_paths.append(Path(stripped))
+            possible_paths.append(Path("src") / stripped)
+            possible_paths.append(Path("app") / stripped)
+        elif import_str.startswith("@") and "/" in import_str:
+            # E.g. @components/Navbar or @lib/utils
+            parts = import_str.split("/", 1)
+            folder_part = parts[0].lstrip("@")
+            rest = parts[1]
+            possible_paths.append(Path(folder_part) / rest)
+            possible_paths.append(Path("src") / folder_part / rest)
 
+        # 4. Root-relative or baseUrl imports (e.g., components/Button or lib/db)
+        possible_paths.append(Path(import_str))
+        possible_paths.append(Path("src") / import_str)
+        possible_paths.append(current_dir / import_str)
+
+        # 5. Python module / package style import (e.g., core.parser or utils.logger)
+        if "." in import_str:
+            path_from_str = import_str.replace(".", "/")
+            possible_paths.append(Path(path_from_str))
+            possible_paths.append(current_dir / path_from_str)
+            possible_paths.append(Path("src") / path_from_str)
+
+    # Test candidates against known project files with all supported extensions
     for base_target in possible_paths:
-        for ext in extensions:
+        for ext in CANDIDATE_EXTENSIONS:
             candidate = str(base_target) + ext
-            # Standardize path separators
             candidate_std = os.path.normpath(candidate).replace("\\", "/")
             if candidate_std in all_files:
                 return candidate_std
+            # Case-insensitive fallback for Windows filesystems
+            lower_std = candidate_std.lower()
+            if lower_std in all_files_lower:
+                return all_files_lower[lower_std]
 
     return None
 
@@ -83,6 +176,8 @@ def build_dependency_graph(
     """
     graph = nx.DiGraph()
     all_files_set: Set[str] = {f.file_path for f in parsed_files}
+    all_files_lower: Dict[str, str] = {f.lower(): f for f in all_files_set}
+    tsconfig_paths: Dict[str, List[str]] = _parse_tsconfig_paths(project_root)
 
     with log_step("Dependency Graph Construction (Step 3)"):
         try:
@@ -102,7 +197,14 @@ def build_dependency_graph(
             edges_added = 0
             for meta in parsed_files:
                 for raw_import in meta.imports:
-                    target_file = resolve_import_path(meta.file_path, raw_import, all_files_set)
+                    target_file = resolve_import_path(
+                        meta.file_path,
+                        raw_import,
+                        all_files_set,
+                        project_root=project_root,
+                        tsconfig_paths=tsconfig_paths,
+                        all_files_lower=all_files_lower
+                    )
                     if target_file and target_file != meta.file_path:
                         graph.add_edge(meta.file_path, target_file, raw_import=raw_import)
                         edges_added += 1

@@ -92,8 +92,38 @@ def process_graph(graph_path: str, hide_isolated: bool = False) -> dict[str, Any
     most_connected_count = -1
 
     from ledger.manager import LedgerManager
+    from sessions.session_manager import SessionManager
     project_root = str(Path(graph_path).parent)
     manager = LedgerManager(project_root)
+
+    # Detect changed files in project from git or session actions
+    changed_set: set[str] = set()
+    try:
+        import subprocess
+        res = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=project_root,
+            capture_output=True,
+            text=True,
+            timeout=2
+        )
+        if res.returncode == 0:
+            for line in res.stdout.strip().splitlines():
+                parts = line.strip().split()
+                if len(parts) >= 2:
+                    changed_set.add(parts[-1].replace("\\", "/").lstrip("./"))
+    except Exception:
+        pass
+
+    try:
+        sm = SessionManager(project_root)
+        sess = sm.store.get_active_session(project_root)
+        if sess:
+            for a in sess.actions:
+                if a.file_path:
+                    changed_set.add(a.file_path.replace("\\", "/").lstrip("./"))
+    except Exception:
+        pass
 
     for raw_node in raw_nodes:
         node_id: str = raw_node.get("id", raw_node.get("file_path", ""))
@@ -121,6 +151,12 @@ def process_graph(graph_path: str, hide_isolated: bool = False) -> dict[str, Any
             lock_status = "frozen" if feat.lock_entire_file else "partially_frozen"
             locked_funcs = feat.locked_functions
 
+        is_changed = (
+            node_id_std in changed_set
+            or node_id in changed_set
+            or any(node_id_std.endswith(c) for c in changed_set)
+        )
+
         node: dict[str, Any] = {
             "id": node_id,
             "label": Path(node_id).name,
@@ -135,10 +171,12 @@ def process_graph(graph_path: str, hide_isolated: bool = False) -> dict[str, Any
             "group": _first_folder(node_id),
             "summary": raw_node.get("summary", ""),
             "is_isolated": is_isolated,
+            "is_changed": is_changed,
             "lock_status": lock_status,
             "locked_functions": locked_funcs,
         }
         d3_nodes.append(node)
+
 
         if ibc > most_connected_count:
             most_connected_count = ibc
@@ -160,13 +198,18 @@ def process_graph(graph_path: str, hide_isolated: bool = False) -> dict[str, Any
 
     # ---- Stats ------------------------------------------------------------
     isolated_count = sum(1 for n in d3_nodes if n["is_isolated"])
+    frozen_count = sum(1 for n in d3_nodes if n.get("lock_status") in ("frozen", "partially_frozen"))
     stats: dict[str, Any] = {
         "total_files": len(d3_nodes),
         "total_connections": len(d3_links),
         "most_connected_file": most_connected_file,
         "isolated_files": isolated_count,
         "languages": language_counts,
+        "changed_files": list(changed_set),
+        "changed_files_count": len(changed_set),
+        "frozen_count": frozen_count,
     }
+
 
     logger.info(
         "graph_processor: %d nodes, %d links, most connected: %s",

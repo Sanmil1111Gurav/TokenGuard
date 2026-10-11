@@ -2,2391 +2,855 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>TokenGuard — Dependency Graph</title>
-  <meta name="description" content="Interactive visual dependency graph for your codebase — powered by TokenGuard."/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TokenGuard — Architectural Intelligence & Edit Ledger</title>
+  <meta name="description" content="Intelligent codebase dependency visualizer, token savings tracker, and edit protection ledger."/>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
   <style>
     :root {
-      --bg:        #0d0f18;
-      --surface:   #141728;
-      --surface2:  #1c2035;
-      --border:    #252840;
-      --border2:   #2e3354;
-      --text:      #e2e8f6;
-      --text-muted:#7880a0;
-      --text-dim:  #4a5075;
+      --bg: #0b0e17;
+      --surface: #121626;
+      --surface-card: #181d33;
+      --surface-hover: #212744;
+      --border: #232946;
+      --border-bright: #333d66;
+      --text: #e6edf8;
+      --text-muted: #8c97be;
+      --text-dim: #54608a;
 
-      /* Folder palette */
-      --c-root:       #94a3b8;
-      --c-core:       #60a5fa;
-      --c-config:     #a78bfa;
-      --c-graph:      #34d399;
-      --c-utils:      #fbbf24;
-      --c-tests:      #f87171;
-      --c-api:        #38bdf8;
-      --c-visualizer: #f472b6;
-      --c-default:    #94a3b8;
+      /* Primary Gradients & Accents */
+      --primary: #3b82f6;
+      --primary-glow: rgba(59, 130, 246, 0.4);
+      --emerald: #10b981;
+      --emerald-glow: rgba(16, 185, 129, 0.4);
+      --amber: #f59e0b;
+      --amber-glow: rgba(245, 158, 11, 0.4);
+      --rose: #ef4444;
+      --rose-glow: rgba(239, 68, 68, 0.4);
+      --cyan: #06b6d4;
+      --cyan-glow: rgba(6, 182, 212, 0.4);
+      --purple: #8b5cf6;
 
-      /* Semantic */
-      --edge-default: rgba(100,116,175,0.35);
-      --edge-hi:      #fbbf24;
-      --path-color:   #00d4aa;
-      --start-color:  #4ade80;
-      --end-color:    #f87171;
-
-      --radius: 10px;
-      --pill-h: 30px;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
     }
 
-    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
-    html,body { width:100%; height:100%; background:var(--bg); color:var(--text); font-family:'Inter',system-ui,sans-serif; overflow:hidden; font-size:14px; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%;
+      background: var(--bg); color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      overflow: hidden; font-size: 13px;
+    }
 
-    /* ── App shell ─────────────────────────────────────────────── */
-    #app { display:flex; flex-direction:column; height:100vh; }
+    /* ── App Shell ───────────────────────────────────────────────────────── */
+    #app { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
 
-    /* ── Header ────────────────────────────────────────────────── */
+    /* ── Top Header ──────────────────────────────────────────────────────── */
     #header {
-      display:flex; align-items:center; gap:14px; padding:10px 18px;
-      background:var(--surface); border-bottom:1px solid var(--border);
-      flex-shrink:0; z-index:20; height:54px;
+      height: 58px; background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 18px; z-index: 50; flex-shrink: 0;
     }
-    #logo {
-      display:flex; align-items:center; gap:9px; white-space:nowrap;
-      font-size:.95rem; font-weight:700; letter-spacing:-.4px;
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .brand {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; color: inherit; font-weight: 800; font-size: 1.05rem;
+      letter-spacing: -0.4px;
     }
-    #logo .icon {
-      width:30px; height:30px; border-radius:8px;
-      background:linear-gradient(135deg,#3b82f6,#8b5cf6);
-      display:flex; align-items:center; justify-content:center;
-      font-size:14px; flex-shrink:0;
-      box-shadow:0 0 12px rgba(59,130,246,.4);
+    .brand-icon {
+      width: 32px; height: 32px; border-radius: var(--radius-md);
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; box-shadow: 0 0 16px var(--primary-glow);
     }
-    #logo .name { color:var(--text); }
-    #logo .name span { color:#60a5fa; }
+    .brand-title span { color: #60a5fa; }
 
-    /* Search */
-    #search-wrap { position:relative; width:230px; }
-    #search-wrap .ico { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-muted); pointer-events:none; font-size:13px; }
-    #search { width:100%; background:var(--bg); border:1px solid var(--border2); border-radius:8px; padding:7px 10px 7px 32px; color:var(--text); font-size:.82rem; outline:none; font-family:inherit; transition:border-color .2s,box-shadow .2s; }
-    #search:focus { border-color:#60a5fa; box-shadow:0 0 0 3px rgba(96,165,250,.15); }
-    #search::placeholder { color:var(--text-dim); }
-
-    /* Folder filter pills */
-    #folder-filters { display:flex; gap:6px; align-items:center; overflow-x:auto; scrollbar-width:none; }
-    #folder-filters::-webkit-scrollbar { display:none; }
-    .filter-pill {
-      display:flex; align-items:center; gap:5px; padding:4px 10px;
-      border-radius:20px; border:1px solid var(--border2); background:var(--bg);
-      font-size:.73rem; font-weight:500; cursor:pointer; white-space:nowrap;
-      transition:all .15s; color:var(--text-muted);
+    /* Search Box */
+    .search-box {
+      position: relative; width: 260px;
     }
-    .filter-pill .dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
-    .filter-pill.active { color:var(--text); border-color:currentColor; background:rgba(255,255,255,.05); }
-    .filter-pill:hover { background:rgba(255,255,255,.05); }
-
-    /* Header right */
-    #hdr-right { margin-left:auto; display:flex; align-items:center; gap:10px; }
-    .stat-chip { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:5px 12px; font-size:.75rem; color:var(--text-muted); white-space:nowrap; }
-    .stat-chip b { color:var(--text); font-weight:600; }
-
-    /* ── Body ──────────────────────────────────────────────────── */
-    #body { display:flex; flex:1; overflow:hidden; }
-
-    /* ── Canvas ────────────────────────────────────────────────── */
-    #canvas { position:relative; flex:1; overflow:hidden; background:var(--bg); }
-    svg#g { width:100%; height:100%; display:block; cursor:grab; }
-    svg#g:active { cursor:grabbing; }
-
-    /* ── Canvas controls ───────────────────────────────────────── */
-    #zoom-ctrl {
-      position:absolute; top:14px; right:14px; display:flex; flex-direction:column;
-      background:var(--surface); border:1px solid var(--border); border-radius:10px;
-      overflow:hidden; z-index:5; box-shadow:0 4px 20px rgba(0,0,0,.4);
+    .search-input {
+      width: 100%; height: 34px; background: var(--bg);
+      border: 1px solid var(--border); border-radius: 20px;
+      padding: 0 12px 0 34px; color: var(--text); font-size: 0.8rem;
+      outline: none; transition: all 0.2s; font-family: inherit;
     }
-    .zb { background:none; border:none; color:var(--text-muted); padding:8px 14px; cursor:pointer; font-size:14px; font-family:inherit; transition:all .15s; border-bottom:1px solid var(--border); }
-    .zb:last-child { border-bottom:none; }
-    .zb:hover { background:var(--surface2); color:var(--text); }
-
-    /* ── Path controls ─────────────────────────────────────────── */
-    #path-bar {
-      position:absolute; bottom:50px; left:50%; transform:translateX(-50%);
-      display:flex; gap:8px; align-items:center; z-index:5;
-      background:var(--surface); border:1px solid var(--border); border-radius:12px;
-      padding:6px 10px; box-shadow:0 4px 20px rgba(0,0,0,.5);
+    .search-input:focus {
+      border-color: #60a5fa; box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
     }
-    .path-indicator { font-size:.75rem; color:var(--text-muted); }
-    .path-node-label { font-size:.78rem; font-weight:600; padding:3px 10px; border-radius:6px; }
-    .start-label { background:rgba(74,222,128,.15); color:var(--start-color); border:1px solid rgba(74,222,128,.3); }
-    .end-label   { background:rgba(248,113,113,.15); color:var(--end-color);   border:1px solid rgba(248,113,113,.3); }
-    #btn-find-path {
-      background:linear-gradient(135deg,#3b82f6,#8b5cf6); border:none; border-radius:8px;
-      color:#fff; font-size:.78rem; font-weight:600; padding:6px 14px; cursor:pointer;
-      transition:opacity .15s; opacity:.4; pointer-events:none;
-    }
-    #btn-find-path.ready { opacity:1; pointer-events:all; }
-    #btn-find-path:hover { opacity:.85; }
-    #btn-clear-path { background:none; border:1px solid var(--border2); border-radius:8px; color:var(--text-muted); font-size:.78rem; padding:6px 12px; cursor:pointer; transition:all .15s; display:none; }
-    #btn-clear-path.show { display:block; }
-    #btn-clear-path:hover { border-color:var(--end-color); color:var(--end-color); }
-
-    /* ── Animated Directional Path Lines ──────────────────────── */
-    @keyframes flowDash {
-      0% { stroke-dashoffset: 28; }
-      100% { stroke-dashoffset: 0; }
-    }
-    .path-glow-backing {
-      stroke: #00f3ff;
-      stroke-width: 5px;
-      stroke-opacity: 0.45;
-      filter: drop-shadow(0 0 8px rgba(0, 243, 255, 0.8));
-      pointer-events: none;
-    }
-    .path-animated-edge {
-      stroke: #00f3ff;
-      stroke-width: 3.5px;
-      stroke-dasharray: 8 6;
-      stroke-linecap: round;
-      animation: flowDash 0.75s linear infinite;
-      filter: drop-shadow(0 0 6px rgba(0, 243, 255, 0.8));
-      pointer-events: none;
+    .search-icon {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--text-muted); pointer-events: none; font-size: 12px;
     }
 
-    /* ── Path result card ─────────────────────────────────────────── */
-    #path-result {
-      position: absolute;
-      top: 60px;
-      left: 18px;
-      background: rgba(15, 20, 32, 0.92);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(0, 243, 255, 0.35);
-      border-radius: 14px;
-      padding: 14px 16px;
-      width: 270px;
-      max-height: 520px;
-      overflow-y: auto;
-      z-index: 25;
-      display: none;
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 243, 255, 0.15);
-    }
-    #path-result::-webkit-scrollbar { width: 5px; }
-    #path-result::-webkit-scrollbar-thumb { background: #3b4261; border-radius: 4px; }
-
-    .path-result-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    .path-result-header h4 {
-      color: #00f3ff;
-      font-size: 0.85rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin: 0;
-      letter-spacing: 0.3px;
-    }
-    .path-close-btn {
-      background: none;
-      border: none;
-      color: var(--text-dim);
-      font-size: 0.9rem;
-      cursor: pointer;
-      padding: 2px 6px;
-      border-radius: 4px;
+    /* View Controls in Header */
+    .view-toggles { display: flex; align-items: center; gap: 6px; }
+    .hdr-btn {
+      height: 32px; padding: 0 12px; background: var(--surface-card);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      color: var(--text-muted); font-size: 0.78rem; font-weight: 500;
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
       transition: all 0.15s;
     }
-    .path-close-btn:hover {
-      color: #ef4444;
-      background: rgba(239, 68, 68, 0.15);
+    .hdr-btn:hover { background: var(--surface-hover); color: var(--text); border-color: var(--border-bright); }
+    .hdr-btn.active {
+      background: rgba(59, 130, 246, 0.15); color: #60a5fa;
+      border-color: #3b82f6; font-weight: 600;
     }
 
-    .path-step-card {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 10px;
-      padding: 8px 10px;
-      transition: all 0.2s ease;
+    /* Header Right Metrics */
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .stat-badge {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 4px 10px;
+      font-size: 0.75rem; color: var(--text-muted); display: flex; gap: 5px; align-items: center;
     }
-    .path-step-card:hover {
-      border-color: rgba(0, 243, 255, 0.4);
-      background: rgba(0, 243, 255, 0.06);
-    }
-    .path-step-card.start-step {
-      border-color: rgba(74, 222, 128, 0.4);
-      background: rgba(74, 222, 128, 0.06);
-    }
-    .path-step-card.end-step {
-      border-color: rgba(248, 113, 113, 0.4);
-      background: rgba(248, 113, 113, 0.06);
-    }
+    .stat-badge b { color: var(--text); font-family: 'JetBrains Mono', monospace; }
+    .badge-emerald b { color: #34d399; }
+    .badge-amber b { color: #fbbf24; }
+    .badge-cyan b { color: #38bdf8; }
 
-    .path-step-num {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: rgba(0, 243, 255, 0.15);
-      color: #00f3ff;
-      border: 1px solid rgba(0, 243, 255, 0.4);
-      font-size: 0.7rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .start-step .path-step-num {
-      background: rgba(74, 222, 128, 0.2);
-      color: #4ade80;
-      border-color: #4ade80;
-    }
-    .end-step .path-step-num {
-      background: rgba(248, 113, 113, 0.2);
-      color: #f87171;
-      border-color: #f87171;
-    }
+    /* ── Main Container ──────────────────────────────────────────────────── */
+    #main { display: flex; flex: 1; overflow: hidden; position: relative; }
 
-    .path-step-info {
-      flex: 1;
-      min-width: 0;
-    }
-    .path-step-title {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.76rem;
-      font-weight: 600;
-      color: var(--text);
-      white-space: nowrap;
+    /* ── Graph Canvas View ───────────────────────────────────────────────── */
+    #canvas-container {
+      flex: 1; position: relative; background: radial-gradient(circle at 50% 50%, #111528 0%, #080a13 100%);
       overflow: hidden;
-      text-overflow: ellipsis;
     }
-    .path-step-meta {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 3px;
+    #graph-svg { width: 100%; height: 100%; display: block; }
+
+    /* Canvas Floating Overlay Controls */
+    .canvas-overlay-top {
+      position: absolute; top: 16px; left: 16px; z-index: 10;
+      display: flex; gap: 8px; align-items: center;
     }
-    .path-step-group {
-      font-size: 0.62rem;
-      font-weight: 600;
-      padding: 1px 6px;
-      border-radius: 4px;
-      text-transform: uppercase;
+    .overlay-card {
+      background: rgba(18, 22, 38, 0.85); backdrop-filter: blur(12px);
+      border: 1px solid var(--border); border-radius: var(--radius-md);
+      padding: 6px 12px; display: flex; gap: 8px; align-items: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     }
-    .path-step-tag {
-      font-size: 0.6rem;
-      color: var(--text-dim);
-      font-weight: 600;
+    .canvas-overlay-bottom {
+      position: absolute; bottom: 16px; left: 16px; z-index: 10;
+      display: flex; gap: 10px; align-items: center;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 6px; font-size: 0.74rem; color: var(--text-muted);
+    }
+    .legend-dot { width: 9px; height: 9px; border-radius: 50%; }
+
+    /* Floating Zoom Controls */
+    .zoom-controls {
+      position: absolute; top: 16px; right: 16px; z-index: 10;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .zoom-btn {
+      width: 34px; height: 34px; background: rgba(18, 22, 38, 0.85); backdrop-filter: blur(8px);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      color: var(--text); font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s; box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    .zoom-btn:hover { background: var(--surface-hover); border-color: #60a5fa; color: #60a5fa; }
+
+    /* ── Right Intelligence Sidebar ──────────────────────────────────────── */
+    #sidebar {
+      width: 380px; background: var(--surface);
+      border-left: 1px solid var(--border);
+      display: flex; flex-direction: column; z-index: 30;
+      flex-shrink: 0; height: 100%;
     }
 
-    .path-connector {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 4px 0;
-      position: relative;
+    /* Sidebar Navigation Tabs */
+    .sidebar-tabs {
+      display: flex; border-bottom: 1px solid var(--border);
+      background: var(--surface-card); padding: 4px 6px 0; gap: 4px;
     }
-    .path-line-track {
-      width: 2px;
-      height: 10px;
-      background: linear-gradient(to bottom, rgba(0, 243, 255, 0.6), rgba(0, 243, 255, 0.2));
+    .sidebar-tab {
+      flex: 1; padding: 10px 4px; text-align: center;
+      font-size: 0.76rem; font-weight: 600; color: var(--text-muted);
+      cursor: pointer; border-top-left-radius: var(--radius-sm);
+      border-top-right-radius: var(--radius-sm); border-bottom: 2px solid transparent;
+      transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 5px;
     }
-    .path-arrow-down {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: rgba(0, 243, 255, 0.12);
-      border: 1px solid rgba(0, 243, 255, 0.35);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-top: -2px;
-      margin-bottom: -2px;
+    .sidebar-tab:hover { color: var(--text); background: rgba(255, 255, 255, 0.03); }
+    .sidebar-tab.active {
+      color: #60a5fa; border-bottom-color: #3b82f6; background: var(--surface);
+    }
+    .tab-badge {
+      background: rgba(59, 130, 246, 0.2); color: #93c5fd;
+      padding: 1px 6px; border-radius: 10px; font-size: 0.68rem;
     }
 
-    /* ── Legend ────────────────────────────────────────────────── */
-    #legend {
-      position:absolute; bottom:50px; right:14px;
-      background:var(--surface); border:1px solid var(--border); border-radius:12px;
-      padding:12px 16px; font-size:.75rem; z-index:5;
-      box-shadow:0 4px 20px rgba(0,0,0,.4); min-width:160px;
+    /* Tab Content Panels */
+    .tab-content {
+      flex: 1; overflow-y: auto; padding: 18px; display: none;
+      flex-direction: column; gap: 16px;
     }
-    #legend h4 { color:var(--text-muted); font-size:.68rem; text-transform:uppercase; letter-spacing:.8px; margin-bottom:10px; }
-    .leg-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; color:var(--text-muted); }
-    .leg-row:hover { color:var(--text); cursor:pointer; }
-    .leg-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
-    .leg-name { font-weight:500; }
-    .leg-count { margin-left:auto; font-size:.7rem; color:var(--text-dim); }
+    .tab-content.active { display: flex; }
+    .tab-content::-webkit-scrollbar { width: 5px; }
+    .tab-content::-webkit-scrollbar-track { background: transparent; }
+    .tab-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-    /* ── Tooltip ───────────────────────────────────────────────── */
-    #tooltip {
-      position:fixed; background:var(--surface); border:1px solid var(--border2);
-      border-radius:10px; padding:10px 14px; font-size:.78rem; pointer-events:none;
-      z-index:200; opacity:0; transition:opacity .12s; max-width:220px;
-      box-shadow:0 8px 32px rgba(0,0,0,.6);
+    /* ── Hero Savings Card ───────────────────────────────────────────────── */
+    .hero-card {
+      background: linear-gradient(135deg, rgba(30, 58, 138, 0.4), rgba(17, 24, 39, 0.8));
+      border: 1px solid rgba(59, 130, 246, 0.35); border-radius: var(--radius-lg);
+      padding: 20px; position: relative; overflow: hidden;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
     }
-    .tip-file { font-weight:700; color:var(--text); margin-bottom:6px; font-family:'JetBrains Mono',monospace; font-size:.75rem; word-break:break-all; }
-    .tip-folder { display:inline-block; font-size:.65rem; font-weight:600; border-radius:4px; padding:1px 7px; margin-bottom:6px; text-transform:uppercase; letter-spacing:.4px; }
-    .tip-row { display:flex; justify-content:space-between; gap:14px; margin-top:3px; color:var(--text-muted); }
-    .tip-row b { color:var(--text); font-weight:500; }
-
-    /* ── Status bar ────────────────────────────────────────────── */
-    #statusbar {
-      background:var(--surface); border-top:1px solid var(--border);
-      padding:5px 18px; font-size:.72rem; color:var(--text-muted);
-      display:flex; align-items:center; gap:16px; flex-shrink:0; height:32px;
+    .hero-glow {
+      position: absolute; right: -20px; top: -20px; width: 120px; height: 120px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, transparent 70%);
+      pointer-events: none;
     }
-    #status-right { margin-left:auto; display:flex; gap:10px; }
-    #status-mode { color:var(--path-color); font-weight:600; }
-    .sep { color:var(--border2); }
-
-    /* ── Right panel ───────────────────────────────────────────── */
-    #panel {
-      width:0; background:var(--surface); border-left:1px solid var(--border);
-      display:flex; flex-direction:column; overflow:hidden;
-      transition:width .25s cubic-bezier(.4,0,.2,1); flex-shrink:0;
+    .hero-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .hero-badge {
+      font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 20px;
+      background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);
+      display: flex; align-items: center; gap: 4px;
     }
-    #panel.open { width:370px; }
-
-    #panel-top {
-      padding:16px 16px 12px; border-bottom:1px solid var(--border); flex-shrink:0;
+    .hero-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #10b981; }
+    .hero-metric {
+      font-size: 2.2rem; font-weight: 800; font-family: 'JetBrains Mono', monospace;
+      color: #ffffff; line-height: 1.1; letter-spacing: -1px;
     }
-    #panel-badge { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
-    #panel-folder-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
-    #panel-folder-name { font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.6px; color:var(--text-muted); }
-    #panel-file { font-size:.92rem; font-weight:700; color:var(--text); font-family:'JetBrains Mono',monospace; word-break:break-all; line-height:1.4; }
-    #panel-summary { font-size:.75rem; color:var(--text-muted); margin-top:6px; font-style:italic; line-height:1.5; }
-    #panel-metrics { display:flex; gap:8px; margin-top:10px; }
-    .metric { flex:1; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:8px; text-align:center; }
-    .metric .val { font-size:1.1rem; font-weight:700; color:var(--text); display:block; }
-    .metric .lbl { font-size:.65rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; }
+    .hero-metric span { font-size: 1.1rem; color: #34d399; margin-left: 4px; }
+    .hero-subtitle { font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; }
 
-    #panel-body { flex:1; overflow-y:auto; padding:14px 16px; scrollbar-width:thin; scrollbar-color:#3b4261 transparent; }
-    #panel-body::-webkit-scrollbar { width:7px; }
-    #panel-body::-webkit-scrollbar-track { background:transparent; }
-    #panel-body::-webkit-scrollbar-thumb { background:#3b4261; border-radius:4px; transition:background .15s; }
-    #panel-body::-webkit-scrollbar-thumb:hover { background:#4c566a; }
-
-    .sec-title {
-      font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.8px;
-      color:var(--text-dim); margin:16px 0 8px; display:flex; align-items:center; gap:6px;
+    /* Metrics Grid */
+    .metrics-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;
     }
-    .sec-title:first-child { margin-top:0; }
-    .sec-title .badge { background:var(--border); border-radius:4px; padding:1px 6px; font-size:.65rem; color:var(--text-muted); }
-    .chip-wrap { display:flex; flex-wrap:wrap; gap:5px; }
-    .chip {
-      font-size:.72rem; padding:3px 9px; border-radius:5px; font-family:'JetBrains Mono',monospace;
-      border:1px solid; cursor:default; transition:all .15s;
+    .metric-card {
+      background: var(--surface-card); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 12px;
+      display: flex; flex-direction: column; gap: 4px;
     }
-    .chip.fn  { color:#a78bfa; border-color:rgba(167,139,250,.25); background:rgba(167,139,250,.07); }
-    .chip.cls { color:#34d399; border-color:rgba(52,211,153,.25); background:rgba(52,211,153,.07); }
-    .chip.imp { color:var(--text-muted); border-color:var(--border); background:transparent; }
-    .chip.iby { color:#fbbf24; border-color:rgba(251,191,36,.25); background:rgba(251,191,36,.07); cursor:pointer; }
-    .chip.iby:hover { background:rgba(251,191,36,.15); color:#fde68a; }
-    .empty { font-size:.75rem; color:var(--text-dim); font-style:italic; }
+    .metric-card-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+    .metric-card-value { font-size: 1.25rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    .val-saved { color: #34d399; }
+    .val-used { color: #60a5fa; }
 
-    pre#src-preview {
-      font-family:'JetBrains Mono',monospace; font-size:.67rem; color:var(--text-muted);
-      background:var(--bg); border:1px solid var(--border); border-radius:8px;
-      padding:10px; max-height:180px; overflow-y:auto; overflow-x:auto;
-      white-space:pre; line-height:1.6;
+    /* Section Headers */
+    .section-title {
+      font-size: 0.75rem; text-transform: uppercase; font-weight: 700;
+      color: var(--text-muted); letter-spacing: 0.6px;
+      display: flex; justify-content: space-between; align-items: center;
     }
-    pre#src-preview::-webkit-scrollbar { width:7px; height:7px; }
-    pre#src-preview::-webkit-scrollbar-track { background:transparent; }
-    pre#src-preview::-webkit-scrollbar-thumb { background:#3b4261; border-radius:4px; transition:background .15s; }
-    pre#src-preview::-webkit-scrollbar-thumb:hover { background:#4c566a; }
 
-    #panel-footer { padding:12px 16px; border-top:1px solid var(--border); display:flex; gap:8px; flex-shrink:0; }
-    .pfooter-btn { flex:1; padding:8px; border-radius:8px; font-size:.78rem; font-weight:600; cursor:pointer; border:1px solid; font-family:inherit; transition:all .15s; }
-    #pf-start { color:var(--start-color); border-color:rgba(74,222,128,.3); background:rgba(74,222,128,.07); }
-    #pf-start:hover { background:rgba(74,222,128,.15); }
-    #pf-end   { color:var(--end-color);   border-color:rgba(248,113,113,.3); background:rgba(248,113,113,.07); }
-    #pf-end:hover   { background:rgba(248,113,113,.15); }
+    /* Live Actions Feed */
+    .action-feed { display: flex; flex-direction: column; gap: 8px; }
+    .action-card {
+      background: var(--surface-card); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 12px;
+      transition: all 0.15s; display: flex; flex-direction: column; gap: 6px;
+    }
+    .action-card:hover { border-color: var(--border-bright); background: var(--surface-hover); }
+    .action-top { display: flex; justify-content: space-between; align-items: center; }
+    .action-type {
+      font-size: 0.68rem; font-weight: 700; padding: 2px 7px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .type-query { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+    .type-compress { background: rgba(139, 92, 246, 0.2); color: #c4b5fd; }
+    .type-check_file { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+    .type-lock { background: rgba(6, 182, 212, 0.2); color: #67e8f9; }
+    .type-scan { background: rgba(245, 158, 11, 0.2); color: #fde68a; }
+    .action-time { font-size: 0.68rem; color: var(--text-dim); }
+    .action-desc { font-size: 0.82rem; color: var(--text); font-weight: 500; }
+    .action-meta {
+      font-size: 0.72rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .saved-pill { color: #34d399; font-weight: 600; }
 
-    /* ── SVG elements ──────────────────────────────────────────── */
-    .hull { stroke-width:1.5; fill-opacity:.06; stroke-opacity:.25; }
-    .link { fill:none; stroke-opacity:.7; transition:stroke .15s; }
-    .node-pill rect { rx:7; ry:7; cursor:pointer; }
-    .node-pill text { pointer-events:none; font-family:'Inter',sans-serif; font-weight:500; fill:var(--text); font-size:11px; dominant-baseline:central; text-anchor:middle; }
-    .node-pill .icon-txt { font-size:9px; fill:rgba(255,255,255,.5); dominant-baseline:central; text-anchor:middle; }
-    .node-pill .fn-badge { font-size:9px; font-weight:700; dominant-baseline:central; text-anchor:middle; }
-    .glow-ring { fill:none; stroke-width:2.5; stroke-dasharray:4,3; pointer-events:none; }
-    .glow-ring.frozen { stroke: #e74c3c !important; animation: pulse 2s infinite; stroke-dasharray: none; }
-    .glow-ring.partially_frozen { stroke: #f39c12 !important; animation: pulse 2s infinite; stroke-dasharray: none; }
-    .glow-ring.tampered { stroke: #9b59b6 !important; stroke-dasharray: none; }
-    .glow-ring.unlocked { stroke: #2ecc71 !important; stroke-dasharray: none; transition: opacity 3s; }
-    @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+    /* Changed Files List */
+    .file-item-card {
+      background: var(--surface-card); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 12px 14px;
+      display: flex; justify-content: space-between; align-items: center;
+      transition: all 0.15s;
+    }
+    .file-item-card:hover { border-color: #10b981; background: var(--surface-hover); }
+    .file-item-info { display: flex; flex-direction: column; gap: 3px; max-width: 240px; }
+    .file-item-name { font-weight: 600; font-size: 0.85rem; color: var(--text); word-break: break-all; }
+    .file-item-path { font-size: 0.7rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+    .badge-changed {
+      background: rgba(16, 185, 129, 0.18); color: #34d399;
+      padding: 3px 8px; border-radius: 6px; font-size: 0.68rem; font-weight: 700;
+      border: 1px solid rgba(16, 185, 129, 0.3); display: flex; align-items: center; gap: 4px;
+    }
 
-    /* ── Frozen node styling (Black & White + Fixed) ───────────── */
+    /* Frozen Files (Ledger) List */
+    .ledger-card {
+      background: var(--surface-card); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 12px 14px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .ledger-top { display: flex; justify-content: space-between; align-items: center; }
+    .badge-frozen {
+      background: rgba(6, 182, 212, 0.2); color: #22d3ee;
+      padding: 3px 8px; border-radius: 6px; font-size: 0.68rem; font-weight: 700;
+      border: 1px solid rgba(6, 182, 212, 0.35); display: flex; align-items: center; gap: 4px;
+    }
+    .btn-freeze-toggle {
+      background: rgba(239, 68, 68, 0.15); color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px;
+      padding: 4px 10px; font-size: 0.72rem; font-weight: 600; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-freeze-toggle:hover { background: #ef4444; color: #fff; }
+    .btn-freeze-action {
+      background: rgba(6, 182, 212, 0.15); color: #22d3ee;
+      border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 6px;
+      padding: 4px 10px; font-size: 0.72rem; font-weight: 600; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-freeze-action:hover { background: #06b6d4; color: #fff; }
+
+    /* File Inspector Details */
+    .inspector-header {
+      background: var(--surface-card); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 14px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .chip-container { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .meta-chip {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 4px; padding: 2px 7px; font-size: 0.7rem;
+      font-family: 'JetBrains Mono', monospace; color: var(--text-muted);
+    }
+    .code-preview {
+      background: #080a13; border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 12px;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+      color: #93c5fd; overflow-x: auto; max-height: 240px;
+      line-height: 1.5; white-space: pre;
+    }
+
+    /* ── SVG Node Styles ─────────────────────────────────────────────────── */
+    .node-group { cursor: pointer; }
+    .node-pill {
+      rx: 8; ry: 8; stroke-width: 1.5;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .node-group:hover .node-pill {
+      stroke-width: 2.5; filter: drop-shadow(0 0 12px var(--primary-glow));
+    }
+    .node-pill.is-changed {
+      stroke: #10b981 !important; stroke-width: 2.5 !important;
+      filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.6)) !important;
+    }
     .node-pill.is-frozen {
-      filter: grayscale(100%) brightness(0.88) contrast(1.15);
+      stroke: #06b6d4 !important; stroke-width: 2.5 !important;
+      filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.6)) !important;
     }
-    .node-pill.is-frozen rect:first-of-type {
-      fill: #18181b !important;
-      stroke: #71717a !important;
-      stroke-width: 1.5px !important;
+    .node-pill.is-hub {
+      stroke: #f59e0b !important; stroke-width: 2 !important;
     }
-    .node-pill.is-frozen text {
-      fill: #e4e4e7 !important;
+    .node-text {
+      font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600;
+      fill: #ffffff; pointer-events: none; dominant-baseline: central;
+    }
+    .node-badge-txt {
+      font-size: 9px; font-weight: 700; fill: #ffffff; pointer-events: none;
+    }
+    .edge-link {
+      stroke: rgba(100, 116, 175, 0.35); stroke-width: 1.5; fill: none;
+      transition: stroke 0.2s, stroke-width 0.2s;
+    }
+    .edge-link.highlighted {
+      stroke: #38bdf8 !important; stroke-width: 2.5 !important;
+      stroke-opacity: 1 !important; filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.5));
     }
 
-    /* ── Loading ───────────────────────────────────────────────── */
-    #loading {
-      position:fixed; inset:0; background:var(--bg); display:flex; flex-direction:column;
-      align-items:center; justify-content:center; gap:18px; z-index:999;
+    /* Folder Cluster Label */
+    .cluster-label {
+      font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 800;
+      fill: rgba(255, 255, 255, 0.35); text-transform: uppercase; letter-spacing: 1.5px;
+      pointer-events: none; dominant-baseline: central; text-anchor: middle;
     }
-    #loading .spin { width:36px; height:36px; border:3px solid var(--border); border-top-color:#60a5fa; border-radius:50%; animation:spin .7s linear infinite; }
-    #loading h2 { color:var(--text); font-size:1.1rem; }
-    #loading p  { color:var(--text-muted); font-size:.82rem; }
-    @keyframes spin { to { transform:rotate(360deg); } }
 
-    /* ── Freeze/Unfreeze Modal ─────────────────────────────────────── */
-    .modal-overlay {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(13, 15, 24, 0.75); backdrop-filter: blur(6px);
-      z-index: 999; display: flex; align-items: center; justify-content: center;
-      opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+    /* Floating Path Finding Toolbar */
+    .canvas-path-bar {
+      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+      z-index: 25; background: rgba(18, 22, 38, 0.94); backdrop-filter: blur(14px);
+      border: 1px solid var(--border-bright); border-radius: var(--radius-lg);
+      padding: 7px 16px; display: flex; align-items: center; gap: 10px;
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
     }
-    .modal-overlay.open { opacity: 1; pointer-events: auto; }
-    .modal-card {
-      background: var(--surface); border: 1px solid var(--border2);
-      border-radius: 14px; width: 480px; max-width: 90vw; max-height: 80vh;
-      display: flex; flex-direction: column; box-shadow: 0 16px 48px rgba(0,0,0,0.6);
-      overflow: hidden; animation: modalPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    .path-bar-label {
+      font-size: 0.72rem; font-weight: 800; color: #60a5fa; letter-spacing: 0.8px;
     }
-    @keyframes modalPop {
-      from { transform: scale(0.94); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
+    .path-input-wrap { position: relative; width: 175px; }
+    .path-input-wrap input {
+      width: 100%; height: 32px; background: var(--bg);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 0 10px; color: var(--text); font-size: 0.75rem;
+      outline: none; transition: border-color 0.15s; font-family: 'JetBrains Mono', monospace;
     }
-    .modal-header {
-      padding: 16px 20px; border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
+    .path-input-wrap input:focus {
+      border-color: #60a5fa; box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
     }
-    .modal-header h3 { margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text); }
-    .modal-close {
-      background: transparent; border: none; color: var(--text-dim); font-size: 1.1rem;
-      cursor: pointer; padding: 4px; border-radius: 4px; transition: color 0.15s;
+    .path-arrow { color: var(--text-muted); font-size: 13px; font-weight: bold; }
+    .path-btn {
+      height: 32px; padding: 0 14px; background: linear-gradient(135deg, #2563eb, #3b82f6);
+      border: none; border-radius: var(--radius-sm); color: #fff;
+      font-size: 0.76rem; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s; box-shadow: 0 2px 10px rgba(37, 99, 235, 0.35);
     }
-    .modal-close:hover { color: var(--text); }
-    .modal-body { padding: 16px 20px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; scrollbar-width:thin; scrollbar-color:#3b4261 transparent; }
-    .modal-body::-webkit-scrollbar { width: 7px; }
-    .modal-body::-webkit-scrollbar-track { background: transparent; }
-    .modal-body::-webkit-scrollbar-thumb { background: #3b4261; border-radius: 4px; transition: background .15s; }
-    .modal-body::-webkit-scrollbar-thumb:hover { background: #4c566a; }
-    .modal-subtitle { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
-    .modal-actions-bar {
-      display: flex; align-items: center; justify-content: space-between;
-      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-      padding: 10px 14px; font-size: 0.82rem; font-weight: 600; color: var(--text);
-    }
-    .modal-file-list {
-      display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow-y: auto;
-      padding-right: 4px; margin-top: 4px;
-    }
-    .modal-file-list::-webkit-scrollbar { width: 7px; }
-    .modal-file-list::-webkit-scrollbar-track { background: transparent; }
-    .modal-file-list::-webkit-scrollbar-thumb { background: #3b4261; border-radius: 4px; transition: background .15s; }
-    .modal-file-list::-webkit-scrollbar-thumb:hover { background: #4c566a; }
-    .modal-file-item {
-      display: flex; align-items: center; gap: 10px; padding: 8px 12px;
-      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    .path-btn:hover { background: linear-gradient(135deg, #1d4ed8, #2563eb); }
+    .path-btn-secondary {
+      height: 32px; padding: 0 10px; background: var(--surface-card);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      color: var(--text-muted); font-size: 0.74rem; font-weight: 500;
       cursor: pointer; transition: all 0.15s;
     }
-    .modal-file-item:hover { border-color: var(--accent); background: rgba(59,130,246,0.06); }
-    .modal-file-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
-    .modal-file-name { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text); flex: 1; word-break: break-all; }
-    .modal-file-badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; font-weight: 600; }
-    .modal-footer {
-      padding: 14px 20px; border-top: 1px solid var(--border);
-      display: flex; gap: 10px; justify-content: flex-end; background: var(--surface);
-    }
-    .modal-btn {
-      padding: 8px 16px; border-radius: 8px; font-size: 0.82rem; font-weight: 600;
-      cursor: pointer; border: 1px solid transparent; transition: all 0.15s;
-    }
-    .modal-btn.cancel { background: transparent; border-color: var(--border); color: var(--text-muted); }
-    .modal-btn.cancel:hover { color: var(--text); border-color: var(--border2); }
-    .modal-btn.confirm { background: #3b82f6; color: #fff; }
-    .modal-btn.confirm:hover { background: #2563eb; }
-    .modal-btn.unfreeze { background: #ef4444; color: #fff; }
-    .modal-btn.unfreeze:hover { background: #dc2626; }
+    .path-btn-secondary:hover { background: var(--surface-hover); color: var(--text); }
 
-    /* ── Panel Tabs ────────────────────────────────────────────── */
-    #panel-tabs {
-      display: flex; background: var(--bg); border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
+    /* Path Result Floating Banner */
+    .path-banner {
+      position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+      z-index: 30; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(14px);
+      border: 1px solid rgba(16, 185, 129, 0.5); border-radius: var(--radius-md);
+      padding: 9px 18px; display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65); max-width: 82%;
     }
-    .ptab {
-      flex: 1; padding: 12px 10px; background: transparent; border: none;
-      color: var(--text-muted); font-size: 0.8rem; font-weight: 600;
-      cursor: pointer; transition: all 0.15s; border-bottom: 2px solid transparent;
-      font-family: inherit;
+    .path-banner.error {
+      border-color: rgba(239, 68, 68, 0.5);
     }
-    .ptab:hover { color: var(--text); }
-    .ptab.active {
-      color: #60a5fa; border-bottom-color: #60a5fa; background: var(--surface);
+    .path-banner-content {
+      display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--text);
     }
-
-    #node-view { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
-
-    /* ── Session Memory View ───────────────────────────────────── */
-    #session-view { display: none; flex-direction: column; flex: 1; overflow-y: auto; padding: 16px; gap: 14px; scrollbar-width:thin; scrollbar-color:#3b4261 transparent; }
-    #session-view::-webkit-scrollbar { width: 7px; }
-    #session-view::-webkit-scrollbar-track { background: transparent; }
-    #session-view::-webkit-scrollbar-thumb { background: #3b4261; border-radius: 4px; transition: background .15s; }
-    #session-view::-webkit-scrollbar-thumb:hover { background: #4c566a; }
-    #session-view.open { display: flex; }
-
-    .sess-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
-    .sess-title { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-    .badge-active { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); padding: 2px 8px; border-radius: 12px; font-size: 0.65rem; font-weight: 700; }
-    .sess-id { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-dim); word-break: break-all; margin-bottom: 4px; }
-
-    .sess-hero-card {
-      background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
-      border: 1px solid var(--border2); border-radius: 14px; padding: 20px;
-      text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    .path-banner-text {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #6ee7b7;
+      word-break: break-all;
     }
-    .sess-hero-pct { font-size: 3rem; font-weight: 800; color: #38bdf8; line-height: 1; letter-spacing: -1px; }
-    .sess-hero-lbl { font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; }
-
-    .sess-stats-row { display: flex; gap: 10px; }
-    .sess-stat-card {
-      flex: 1; background: var(--bg); border: 1px solid var(--border);
-      border-radius: 12px; padding: 14px; text-align: center;
+    .path-banner.error .path-banner-text { color: #fca5a5; }
+    .path-banner-close {
+      background: none; border: none; color: var(--text-muted);
+      cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px;
     }
-    .sess-stat-num { font-size: 1.3rem; font-weight: 700; color: var(--text); display: block; font-family: 'JetBrains Mono', monospace; }
-    .sess-stat-num.green { color: #34d399; }
-    .sess-stat-lbl { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
+    .path-banner-close:hover { background: rgba(255,255,255,0.1); color: var(--text); }
 
-    .btn-gradient {
-      width: 100%; padding: 12px; border-radius: 10px; border: none;
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-      color: #fff; font-size: 0.85rem; font-weight: 700; cursor: pointer;
-      box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4); transition: all 0.2s;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
+    /* Path Active Node & Edge Glowing Styles */
+    .node-group.is-path-node .node-pill {
+      stroke: #10b981 !important; stroke-width: 3 !important;
+      fill: #064e3b !important;
+      filter: drop-shadow(0 0 14px rgba(16, 185, 129, 0.8)) !important;
     }
-    .btn-gradient:hover { opacity: 0.92; transform: translateY(-1px); }
-
-    .chart-box {
-      background: var(--bg); border: 1px solid var(--border);
-      border-radius: 12px; padding: 12px; height: 130px; position: relative;
+    .node-group.is-dimmed {
+      opacity: 0.12 !important;
+      transition: opacity 0.3s;
+    }
+    .edge-link.is-path-edge {
+      stroke: #10b981 !important; stroke-width: 3.5 !important;
+      stroke-opacity: 1 !important;
+      stroke-dasharray: none !important;
+      filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.7));
+    }
+    .edge-link.is-dimmed {
+      opacity: 0.05 !important;
+      transition: opacity 0.3s;
     }
 
-    .recent-card {
-      background: var(--bg); border: 1px solid var(--border);
-      border-radius: 10px; padding: 12px; margin-bottom: 8px;
-      cursor: pointer; transition: all 0.2s ease;
+    /* Floating Tooltip */
+    #tooltip {
+      position: absolute; display: none; z-index: 100;
+      background: rgba(15, 20, 36, 0.95); backdrop-filter: blur(10px);
+      border: 1px solid var(--border-bright); border-radius: var(--radius-md);
+      padding: 12px 14px; pointer-events: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      font-size: 0.78rem; max-width: 300px;
     }
-    .recent-card:hover {
-      border-color: #60a5fa;
-      background: var(--surface2);
-      transform: translateY(-1px);
-    }
-
-    /* ── Activity Bar (Far Left) ────────────────────────────────── */
-    #activity-bar {
-      width: 52px; background: var(--surface); border-right: 1px solid var(--border);
-      display: flex; flex-direction: column; align-items: center; padding: 14px 0;
-      gap: 12px; z-index: 25; flex-shrink: 0;
-    }
-    .act-btn {
-      width: 36px; height: 36px; border-radius: 10px; border: 1px solid transparent;
-      background: transparent; color: var(--text-muted); display: flex;
-      align-items: center; justify-content: center; cursor: pointer;
-      transition: all 0.2s ease; position: relative;
-    }
-    .act-btn:hover { color: var(--text); background: var(--surface2); }
-    .act-btn.active {
-      background: linear-gradient(135deg, rgba(139, 92, 246, 0.35), rgba(99, 102, 241, 0.25));
-      color: #a78bfa; border-color: rgba(167, 139, 250, 0.5);
-      box-shadow: 0 0 14px rgba(139, 92, 246, 0.4);
-    }
-
-    /* ── Header Buttons ────────────────────────────────────────── */
-    .hdr-btn {
-      background: var(--bg); border: 1px solid var(--border2); border-radius: 8px;
-      padding: 5px 12px; color: var(--text-muted); font-size: 0.78rem; font-weight: 500;
-      cursor: pointer; transition: all 0.15s; font-family: inherit; display: flex; align-items: center;
-    }
-    .hdr-btn:hover { border-color: #60a5fa; color: var(--text); background: rgba(255,255,255,0.05); }
-    .hdr-btn.active { border-color: #60a5fa; color: #fff; background: rgba(96, 165, 250, 0.15); }
-
-    /* ── Floating Flyout Panels ─────────────────────────────────── */
-    .flyout-panel {
-      position: absolute; background: rgba(20, 23, 40, 0.95);
-      border: 1px solid var(--border2); border-radius: 14px;
-      backdrop-filter: blur(12px); box-shadow: 0 12px 36px rgba(0,0,0,0.6);
-      z-index: 60; font-size: 0.78rem; overflow-y: auto; display: flex;
-      animation: flyoutSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      scrollbar-width: thin; scrollbar-color: #3b4261 transparent;
-    }
-    .flyout-panel::-webkit-scrollbar,
-    .flyout-col-left::-webkit-scrollbar,
-    .flyout-col-right::-webkit-scrollbar {
-      width: 6px;
-    }
-    .flyout-panel::-webkit-scrollbar-thumb,
-    .flyout-col-left::-webkit-scrollbar-thumb,
-    .flyout-col-right::-webkit-scrollbar-thumb {
-      background: #3b4261; border-radius: 4px;
-    }
-    .flyout-panel::-webkit-scrollbar-thumb:hover,
-    .flyout-col-left::-webkit-scrollbar-thumb:hover,
-    .flyout-col-right::-webkit-scrollbar-thumb:hover {
-      background: #4c566a;
-    }
-    @keyframes flyoutSlide {
-      from { opacity: 0; transform: translateX(-10px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-
-    #flyout-filters {
-      top: 14px; left: 64px; width: 480px; height: 305px; max-height: calc(48vh - 20px);
-    }
-    #flyout-peek {
-      top: 333px; left: 64px; width: 480px; height: 320px; max-height: calc(52vh - 40px);
-    }
-    .flyout-col-left {
-      width: 48%; border-right: 1px solid var(--border); padding: 14px;
-      display: flex; flex-direction: column; gap: 8px; overflow-y: auto;
-    }
-    .flyout-col-right {
-      width: 52%; padding: 14px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto;
-    }
-    .fly-cat-item {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 6px 10px; border-radius: 8px; cursor: pointer; color: var(--text-muted);
-      border: 1px solid transparent; transition: all 0.15s; font-size: 0.75rem;
-    }
-    .fly-cat-item:hover { background: var(--surface2); color: var(--text); }
-    .fly-cat-item.active {
-      background: rgba(59, 130, 246, 0.15); border-color: rgba(96, 165, 250, 0.3);
-      color: #60a5fa; font-weight: 600;
-    }
-    .fly-badge {
-      background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
-      padding: 1px 6px; font-size: 0.68rem; color: var(--text-muted);
-    }
-    .tree-item {
-      display: flex; align-items: center; gap: 6px; padding: 4px 6px;
-      color: var(--text-muted); font-family: 'JetBrains Mono', monospace;
-      font-size: 0.73rem; cursor: pointer; border-radius: 4px; transition: all 0.15s;
-    }
-    .tree-item:hover { color: var(--text); background: rgba(255,255,255,0.04); }
-    .tree-item.active { color: #60a5fa !important; font-weight: 600; background: rgba(59,130,246,0.18) !important; }
-    .tree-indent { margin-left: 12px; }
-
-    /* Compact mode adjustments */
-    body.compact-mode #panel { width: 300px !important; }
-    body.compact-mode #activity-bar { width: 42px !important; }
-    body.compact-mode .sess-hero-pct { font-size: 2.2rem; }
   </style>
 </head>
 <body>
+<div id="app">
+  <!-- Top Navigation Bar -->
+  <header id="header">
+    <div class="header-left">
+      <a href="/" class="brand">
+        <div class="brand-icon">🛡️</div>
+        <div class="brand-title">Token<span>Guard</span></div>
+      </a>
 
-<div id="loading">
-  <div class="spin"></div>
-  <h2>TokenGuard</h2>
-  <p>Building dependency graph…</p>
-</div>
+      <!-- Search Input -->
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" class="search-input" placeholder="Search files, functions... (Ctrl+K)" autocomplete="off"/>
+      </div>
 
-<div id="app" style="display:none">
-
-  <!-- ── HEADER ── -->
-  <div id="header">
-    <div id="logo">
-      <div class="icon">⬡</div>
-      <div class="name">Token<span>Guard</span></div>
+      <!-- Layout Mode Toggles -->
+      <div class="view-toggles">
+        <button id="btn-mode-cluster" class="hdr-btn active" onclick="setLayoutMode('cluster')">📁 Folder Clusters</button>
+        <button id="btn-mode-connected" class="hdr-btn" onclick="setLayoutMode('connected')">🔗 Connected Only</button>
+        <button id="btn-mode-force" class="hdr-btn" onclick="setLayoutMode('force')">🌐 All Files</button>
+      </div>
     </div>
 
-    <div id="search-wrap">
-      <span class="ico">⌕</span>
-      <input id="search" type="text" placeholder="Search Files, functions..." autocomplete="off"/>
+    <!-- Header Right Stats -->
+    <div class="header-right">
+      <div class="stat-badge badge-cyan">Files: <b id="stat-files">0</b></div>
+      <div class="stat-badge">Links: <b id="stat-links">0</b></div>
+      <div class="stat-badge badge-emerald" id="badge-changed-container" style="cursor:pointer;" onclick="switchTab('changed')">
+        Changed: <b id="stat-changed">0</b> ⚡
+      </div>
+      <div class="stat-badge badge-amber" id="badge-frozen-container" style="cursor:pointer;" onclick="switchTab('frozen')">
+        Frozen: <b id="stat-frozen">0</b> ❄️
+      </div>
+      <button class="hdr-btn" onclick="manualRefresh()" title="Sync live session and graph updates">🔄 Refresh</button>
+    </div>
+  </header>
+
+  <!-- Body Content -->
+  <div id="main">
+    <!-- Center Graph Canvas -->
+    <div id="canvas-container">
+      <svg id="graph-svg"></svg>
+
+      <!-- Floating Path Finding Toolbar -->
+      <div class="canvas-path-bar">
+        <span class="path-bar-label">PATH:</span>
+        <div class="path-input-wrap">
+          <input type="text" id="path-start-input" list="files-datalist" placeholder="— start —" autocomplete="off" />
+        </div>
+        <span class="path-arrow">➔</span>
+        <div class="path-input-wrap">
+          <input type="text" id="path-end-input" list="files-datalist" placeholder="— end —" autocomplete="off" />
+        </div>
+        <button id="btn-find-path" class="path-btn" onclick="executeFindPath()">Find Path</button>
+        <button id="btn-clear-path" class="path-btn-secondary" onclick="clearActivePath()">Clear</button>
+      </div>
+      <datalist id="files-datalist"></datalist>
+
+      <!-- Path Notification / Banner -->
+      <div id="path-result-banner" class="path-banner" style="display:none;">
+        <div class="path-banner-content">
+          <span class="path-banner-icon">🎯</span>
+          <span id="path-banner-text" class="path-banner-text"></span>
+        </div>
+        <button class="path-banner-close" onclick="clearActivePath()" title="Clear path">✕</button>
+      </div>
+
+      <!-- Bottom Legend -->
+      <div class="canvas-overlay-bottom">
+        <div class="overlay-card">
+          <div class="legend-item"><div class="legend-dot" style="background:#10b981;"></div> Changed File (⚡)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#06b6d4;"></div> Frozen File (❄️)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;"></div> Architecture Hub (👑)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;"></div> Standard Node</div>
+        </div>
+      </div>
+
+      <!-- Zoom Controls -->
+      <div class="zoom-controls">
+        <button class="zoom-btn" onclick="handleZoom(1.3)" title="Zoom In">+</button>
+        <button class="zoom-btn" onclick="handleZoom(0.7)" title="Zoom Out">−</button>
+        <button class="zoom-btn" onclick="resetZoom()" title="Reset View">⊡</button>
+      </div>
     </div>
 
-    <div id="lock-filters" style="display:flex; gap:8px; align-items:center; margin-left: auto; margin-right: auto;">
-      <button class="hdr-btn active" data-lock="all" onclick="setLockFilter(this)" title="Reset all filters & show all nodes">show all</button>
-      <button class="hdr-btn" data-lock="freeze" onclick="setLockFilter(this)" title="Freeze Files">❄️ Freeze Files</button>
-      <button class="hdr-btn" data-lock="unfreeze" onclick="setLockFilter(this)" title="Unfreeze Files">🔓 Unfreeze Files</button>
-    </div>
+    <!-- Right Sidebar Intelligence Panel -->
+    <aside id="sidebar">
+      <!-- Tabs -->
+      <div class="sidebar-tabs">
+        <div class="sidebar-tab active" id="tab-btn-session" onclick="switchTab('session')">
+          ⚡ Session <span class="tab-badge" id="tab-badge-saved">0k</span>
+        </div>
+        <div class="sidebar-tab" id="tab-btn-changed" onclick="switchTab('changed')">
+          📝 Changed <span class="tab-badge" id="tab-badge-changed">0</span>
+        </div>
+        <div class="sidebar-tab" id="tab-btn-frozen" onclick="switchTab('frozen')">
+          ❄️ Frozen <span class="tab-badge" id="tab-badge-frozen">0</span>
+        </div>
+        <div class="sidebar-tab" id="tab-btn-inspector" onclick="switchTab('inspector')">
+          🔍 Inspector
+        </div>
+      </div>
 
-    <div id="hdr-right">
-      <button class="hdr-btn" id="btn-compact-mode" onclick="toggleCompactMode()" title="Toggle Compact Mode">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        Compact Mode
-      </button>
-      <div class="stat-chip">File: <b id="s-files">38</b></div>
-      <div class="stat-chip">Edges <b id="s-edges">87</b></div>
-      <div class="stat-chip">Hub: <b id="s-hub">logger.py</b></div>
-    </div>
+      <!-- Tab 1: Session & Savings -->
+      <div class="tab-content active" id="tab-panel-session">
+        <!-- Hero Savings Card -->
+        <div class="hero-card">
+          <div class="hero-glow"></div>
+          <div class="hero-header">
+            <span class="hero-badge">AI AGENT ACTIVE</span>
+            <span style="font-size:0.7rem; color:var(--text-muted); font-family:'JetBrains Mono', monospace;" id="sess-short-id">ID: active</span>
+          </div>
+          <div class="hero-metric" id="hero-tokens-saved">0 <span id="hero-reduction-pct">0%</span></div>
+          <div class="hero-subtitle">Prompt tokens saved across this coding session</div>
+
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <span class="metric-card-label">Tokens Saved</span>
+              <span class="metric-card-value val-saved" id="metric-saved-num">0</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-card-label">Tokens Used</span>
+              <span class="metric-card-value val-used" id="metric-used-num">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Actions Feed -->
+        <div class="section-title">
+          <span>Recent AI Actions (<span id="action-count-txt">0</span>)</span>
+          <span style="font-size:0.7rem; color:#34d399; font-weight:600;">Live Feed</span>
+        </div>
+
+        <div class="action-feed" id="action-feed-list">
+          <div style="font-size:0.75rem; color:var(--text-dim); font-style:italic; padding:12px 0;">
+            No AI agent actions recorded yet. Run a prompt in Cursor or Antigravity to see live metrics!
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Changed Files -->
+      <div class="tab-content" id="tab-panel-changed">
+        <div class="section-title">
+          <span>Modified in Current Session</span>
+          <span class="tab-badge" id="changed-header-badge">0 files</span>
+        </div>
+        <div id="changed-files-container" style="display:flex; flex-direction:column; gap:8px;">
+          <div style="font-size:0.75rem; color:var(--text-dim); font-style:italic; padding:12px 0;">
+            No files modified in current session.
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Frozen Files (Ledger) -->
+      <div class="tab-content" id="tab-panel-frozen">
+        <div class="section-title">
+          <span>Protected Ledger Files</span>
+          <span class="tab-badge" id="frozen-header-badge">0 locked</span>
+        </div>
+        <p style="font-size:0.75rem; color:var(--text-muted); line-height:1.4;">
+          Frozen files are protected with cryptographic SHA-256 tamper detection. AI agents are prohibited from modifying them without explicit permission.
+        </p>
+        <div id="frozen-files-container" style="display:flex; flex-direction:column; gap:8px;">
+          <div style="font-size:0.75rem; color:var(--text-dim); font-style:italic; padding:12px 0;">
+            No files currently frozen. Click any node in the graph to freeze it!
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 4: File Inspector -->
+      <div class="tab-content" id="tab-panel-inspector">
+        <div id="inspector-placeholder" style="color:var(--text-dim); font-size:0.78rem; font-style:italic; text-align:center; padding:30px 10px;">
+          Click any file node in the graph to inspect its functions, dependencies, and code preview.
+        </div>
+        <div id="inspector-body" style="display:none; flex-direction:column; gap:14px;">
+          <div class="inspector-header">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <span style="font-weight:700; font-size:1rem; word-break:break-all;" id="insp-name">file.ts</span>
+              <span id="insp-lock-badge" class="badge-frozen" style="display:none;">❄️ FROZEN</span>
+            </div>
+            <span style="font-size:0.72rem; color:var(--text-muted); font-family:'JetBrains Mono',monospace;" id="insp-path">app/file.ts</span>
+            <div class="chip-container">
+              <span class="meta-chip" id="insp-lang">typescript</span>
+              <span class="meta-chip" id="insp-connections">0 connections</span>
+            </div>
+          </div>
+
+          <!-- Quick Action Buttons -->
+          <div style="display:flex; gap:8px;">
+            <button id="btn-toggle-lock" class="btn-freeze-action" style="flex:1;" onclick="toggleSelectedFileLock()">
+              ❄️ Freeze File
+            </button>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="hdr-btn" style="flex:1; justify-content:center;" onclick="setAsPathStart()" title="Set this file as path start">
+              📍 Set as Start
+            </button>
+            <button class="hdr-btn" style="flex:1; justify-content:center;" onclick="setAsPathEnd()" title="Set this file as path end">
+              🎯 Set as End
+            </button>
+          </div>
+
+          <div class="section-title">Exported Functions & Classes</div>
+          <div class="chip-container" id="insp-functions-container"></div>
+
+          <div class="section-title">Direct Imports</div>
+          <div class="chip-container" id="insp-imports-container"></div>
+
+          <div class="section-title">Source Preview</div>
+          <div class="code-preview" id="insp-code-preview">// Select a file to view code preview</div>
+        </div>
+      </div>
+    </aside>
   </div>
 
-  <!-- ── BODY ── -->
-  <div id="body">
-
-    <!-- Activity Bar (Far Left) -->
-    <div id="activity-bar">
-      <button class="act-btn" id="act-btn-layout" onclick="fitGraph()" title="Reset / Fit Graph Layout">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
-      </button>
-      <button class="act-btn" id="act-btn-filters" onclick="toggleFlyout('filters')" title="Active Filters & Impact">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7z"/></svg>
-      </button>
-      <button class="act-btn" id="act-btn-peek" onclick="toggleFlyout('peek')" title="Context Peek & Summary">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-      </button>
-    </div>
-
-    <!-- Canvas -->
-    <div id="canvas">
-      <svg id="g"></svg>
-
-      <!-- Floating Flyout Panel 1: Active Filters & Impact -->
-      <div id="flyout-filters" class="flyout-panel" style="display:none;">
-        <div class="flyout-col-left" style="width:48%;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <span style="font-size:0.7rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.6px;">Scope Filters</span>
-            <button onclick="toggleFlyout('filters')" style="background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:0.85rem;">✕</button>
-          </div>
-          <div class="fly-cat-item active" data-cat="all" onclick="selectFlyoutCategory('all', this)">
-            <span>🌐 All Files</span>
-            <span class="fly-badge" id="fly-cnt-all">0</span>
-          </div>
-          <div class="fly-cat-item" data-cat="core" onclick="selectFlyoutCategory('core', this)">
-            <span>⚙️ Core Engine Files</span>
-            <span class="fly-badge" id="fly-cnt-core">0</span>
-          </div>
-          <div class="fly-cat-item" data-cat="compression" onclick="selectFlyoutCategory('compression', this)">
-            <span>📦 Prompt & Compression</span>
-            <span class="fly-badge" id="fly-cnt-comp">0</span>
-          </div>
-          <div class="fly-cat-item" data-cat="api" onclick="selectFlyoutCategory('api', this)">
-            <span>🔌 API & Network Layer</span>
-            <span class="fly-badge" id="fly-cnt-api">0</span>
-          </div>
-          <div class="fly-cat-item" data-cat="tests" onclick="selectFlyoutCategory('tests', this)">
-            <span>🧪 Test Suite</span>
-            <span class="fly-badge" id="fly-cnt-tests">0</span>
-          </div>
-        </div>
-        <div class="flyout-col-right" style="width:52%;">
-          <div style="font-size:0.7rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:2px;">Impact Analysis</div>
-          
-          <div style="background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:10px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-              <span style="font-size:0.75rem; font-weight:700; color:var(--text);">Active Nodes (<span id="fly-sel-count">0</span>)</span>
-              <span id="fly-token-weight" style="font-size:0.7rem; color:#34d399; font-weight:600;">~0k tokens</span>
-            </div>
-            <div style="font-size:0.65rem; color:var(--text-dim); margin-bottom:6px;">Context Token Weight Curve</div>
-            <div style="display:flex; align-items:center; justify-content:space-between;">
-              <span style="font-size:0.65rem; color:var(--text-muted);">low</span>
-              <svg width="100" height="20" viewBox="0 0 100 20" fill="none">
-                <path d="M0 16 L18 14 L30 4 L45 12 L60 8 L75 2 L88 12 L100 6 L100 20 L0 20 Z" fill="rgba(52, 211, 153, 0.18)"/>
-                <path d="M0 16 L18 14 L30 4 L45 12 L60 8 L75 2 L88 12 L100 6" stroke="#34d399" stroke-width="1.8" stroke-linejoin="round"/>
-              </svg>
-              <span style="font-size:0.65rem; color:var(--text-muted);">high</span>
-            </div>
-          </div>
-
-          <div style="background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:10px; cursor:pointer;" onclick="toggleImpactFilter(this)" id="btn-impact-filter">
-            <div style="font-size:0.75rem; font-weight:700; color:#fbbf24; display:flex; align-items:center; justify-content:space-between;">
-              <span>🔥 High-Impact Hubs (<span id="fly-cnt-hubs">0</span>)</span>
-              <span id="impact-badge-lbl" style="font-size:0.65rem; background:rgba(251,191,36,0.15); border:1px solid rgba(251,191,36,0.3); padding:1px 6px; border-radius:4px;">OFF</span>
-            </div>
-            <div style="font-size:0.65rem; color:var(--text-dim); margin-top:3px;">Isolate files with &ge; 4 connections consuming most tokens</div>
-          </div>
-
-          <div style="background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:8px 10px; display:flex; flex-direction:column; gap:6px;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-size:0.75rem; font-weight:700; color:#60a5fa;">
-                🔒 Frozen Files (<span id="fly-cnt-frozen">0</span>)
-              </span>
-              <span class="fly-badge" id="fly-cnt-frozen-badge" style="color:#60a5fa; border-color:rgba(96,165,250,0.3);">0</span>
-            </div>
-            <div style="display:flex; gap:6px; font-size:0.65rem;">
-              <button onclick="highlightFrozenOnCanvas()" style="flex:1; background:rgba(96,165,250,0.12); border:1px solid rgba(96,165,250,0.3); color:#60a5fa; border-radius:6px; padding:4px; cursor:pointer;">Highlight Frozen</button>
-              <button onclick="clearAllFrozenFiles()" style="flex:1; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:#ef4444; border-radius:6px; padding:4px; cursor:pointer;">Clear Frozen</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Floating Flyout Panel 2: Context Peek & Summary -->
-      <div id="flyout-peek" class="flyout-panel" style="display:none;">
-        <div class="flyout-col-left" style="width:45%;">
-          <div style="font-size:0.7rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:6px;">Context Peek</div>
-          <div class="tree-item" onclick="filterByTreeFolder('api', this)"><span>› api</span></div>
-          <div class="tree-item" onclick="filterByTreeFolder('config', this)"><span>› config</span></div>
-          <div class="tree-item" style="color:var(--text);" onclick="filterByTreeFolder('core', this)"><span>˅ core</span></div>
-          <div class="tree-item tree-indent" onclick="zoomToNode('core/scanner.py', this)"><span>📄 scanner.py</span></div>
-          <div class="tree-item" style="color:var(--text);" onclick="filterByTreeFolder('graph', this)"><span>˅ graph</span></div>
-          <div class="tree-item tree-indent" onclick="zoomToNode('graph/query_engine.py', this)"><span>📄 query_engine.py</span></div>
-          <div class="tree-item" onclick="filterByTreeFolder('ledger', this)"><span>› ledger</span></div>
-          <div class="tree-item" onclick="filterByTreeFolder('visualizer', this)"><span>› visualizer</span></div>
-        </div>
-        <div class="flyout-col-right" style="width:55%;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.75rem; font-weight:700; color:var(--text);">Context-sensitive Summary</span>
-            <button onclick="toggleFlyout('peek')" style="background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:0.9rem;">✕</button>
-          </div>
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.65rem; color:var(--text-dim);">Token Activity Rate</span>
-            <span style="font-size:0.65rem; color:#60a5fa; font-weight:600;">Live Stream</span>
-          </div>
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-top:2px;">
-            <span style="font-size:0.65rem; color:var(--text-muted); font-weight:500;">0 min</span>
-            <svg width="110" height="18" viewBox="0 0 110 18" fill="none">
-              <path d="M0 14 L20 12 L35 3 L50 11 L65 8 L80 2 L95 12 L110 6 L110 18 L0 18 Z" fill="rgba(96, 165, 250, 0.18)"/>
-              <path d="M0 14 L20 12 L35 3 L50 11 L65 8 L80 2 L95 12 L110 6" stroke="#60a5fa" stroke-width="1.8" stroke-linejoin="round"/>
-            </svg>
-            <span style="font-size:0.65rem; color:#60a5fa; font-weight:600;">Live</span>
-          </div>
-
-          <div style="background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:8px; margin-top:4px;">
-            <div style="font-size:0.72rem; font-weight:700; color:#a78bfa; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleTraceAccordion()">
-              <span>4 Forward Traces Detected</span>
-              <span id="trace-acc-arrow" style="font-size:0.65rem;">▲</span>
-            </div>
-            <div id="trace-acc-body" style="font-size:0.67rem; color:var(--text-muted); line-height:1.4; display:flex; flex-direction:column; gap:4px;">
-              <div style="display:flex; justify-content:space-between;">
-                <span>api/server.py &rarr; core/scanner.py</span>
-                <span style="color:var(--text-dim);">micro-counts: 3</span>
-              </div>
-              <div style="display:flex; justify-content:space-between;">
-                <span>api/server.py &rarr; graph/query_engine.py</span>
-                <span style="color:var(--text-dim);">micro-counts: 3</span>
-              </div>
-            </div>
-          </div>
-
-          <div style="display:flex; gap:6px; margin-top:auto; font-size:0.68rem;">
-            <a href="#" onclick="runTraceLinksDemo(); return false;" style="color:#60a5fa; text-decoration:none;">[Trace]</a>
-            <a href="#" onclick="highlightTopHubInGraph(); return false;" style="color:#34d399; text-decoration:none;">[Highlight in Graph]</a>
-            <a href="#" onclick="showAllLinksOnCanvas(); return false;" style="color:#a78bfa; text-decoration:none;">[Show All Links]</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Zoom controls -->
-      <div id="zoom-ctrl">
-        <button class="zb" id="btn-fit" title="Fit to screen">⊡ Fit</button>
-        <button class="zb" id="btn-zi"  title="Zoom in">＋</button>
-        <button class="zb" id="btn-zo"  title="Zoom out">－</button>
-        <button class="zb" id="btn-rst" title="Reset zoom">↺</button>
-      </div>
-
-      <!-- Path bar -->
-      <div id="path-bar">
-        <span class="path-indicator">Path:</span>
-        <span class="path-node-label start-label" id="lbl-start">— start</span>
-        <span style="color:var(--text-dim)">→</span>
-        <span class="path-node-label end-label"   id="lbl-end">end —</span>
-        <button id="btn-find-path" onclick="findPath()">Find Path</button>
-        <button id="btn-clear-path" class="" onclick="clearPath()">✕ Clear</button>
-      </div>
-
-      <!-- Path result -->
-      <div id="path-result">
-        <div class="path-result-header">
-          <h4>⚡ Shortest Path</h4>
-          <button class="path-close-btn" onclick="clearPath()" title="Close path">✕</button>
-        </div>
-        <div id="path-steps-container"></div>
-        <div id="path-meta" style="margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06); color:var(--text-dim); font-size:.72rem;"></div>
-      </div>
-
-      <!-- Legend -->
-      <div id="legend">
-        <h4>Folders</h4>
-        <div id="legend-list"></div>
-      </div>
-    </div>
-
-    <!-- Right panel -->
-    <div id="panel">
-      <div id="panel-tabs" style="display:none;">
-        <button class="ptab" id="tab-btn-node" style="display:none;" onclick="switchPanelTab('node')">Node Detail</button>
-        <button class="ptab active" id="tab-btn-session" onclick="switchPanelTab('session')">⚡ Session Memory</button>
-      </div>
-
-      <!-- Node Detail View -->
-      <div id="node-view">
-        <div id="panel-top">
-          <div id="panel-badge">
-            <div id="panel-folder-dot"></div>
-            <div id="panel-folder-name">—</div>
-          </div>
-          <div id="panel-file">Select a node</div>
-          <div id="panel-summary"></div>
-          <div id="panel-metrics">
-            <div class="metric"><span class="val" id="pm-fns">—</span><span class="lbl">Functions</span></div>
-            <div class="metric"><span class="val" id="pm-cls">—</span><span class="lbl">Classes</span></div>
-            <div class="metric"><span class="val" id="pm-imp">—</span><span class="lbl">Imports</span></div>
-            <div class="metric"><span class="val" id="pm-iby">—</span><span class="lbl">Used by</span></div>
-          </div>
-        </div>
-        <div id="panel-body">
-          <div class="sec-title">Functions <span class="badge" id="cnt-fns">0</span></div>
-          <div class="chip-wrap" id="pnl-fns"></div>
-          <div class="sec-title">Classes <span class="badge" id="cnt-cls">0</span></div>
-          <div class="chip-wrap" id="pnl-cls"></div>
-          <div class="sec-title">Imports <span class="badge" id="cnt-imp">0</span></div>
-          <div class="chip-wrap" id="pnl-imp"></div>
-          <div class="sec-title">Imported By <span class="badge" id="cnt-iby">0</span></div>
-          <div class="chip-wrap" id="pnl-iby"></div>
-          <div class="sec-title">Source Preview</div>
-          <pre id="src-preview"></pre>
-        </div>
-        <div id="panel-footer">
-          <button class="pfooter-btn" id="pf-start" onclick="setPathNode('start')">▶ Set as Start</button>
-          <button class="pfooter-btn" id="pf-end"   onclick="setPathNode('end')">■ Set as End</button>
-        </div>
-        <div id="panel-lock-footer" style="padding:0 16px 12px; display:flex; gap:8px; flex-shrink:0;">
-          <button class="pfooter-btn" id="pf-lock" style="color:var(--text); border-color:var(--border);" onclick="toggleLock()">❄️ Freeze / Unfreeze</button>
-        </div>
-      </div>
-
-      <!-- Session Memory View -->
-      <div id="session-view">
-        <div>
-          <div class="sess-header">
-            <span class="sess-title">Active Session</span>
-            <span class="badge-active">ACTIVE</span>
-          </div>
-          <div class="sess-id" id="sess-id-val">loading...</div>
-        </div>
-
-        <div class="sess-hero-card">
-          <div class="sess-hero-pct" id="sess-pct-val">0%</div>
-          <div class="sess-hero-lbl">tokens saved this session</div>
-        </div>
-
-        <div class="sess-stats-row">
-          <div class="sess-stat-card">
-            <span class="sess-stat-num" id="sess-used-val">0</span>
-            <span class="sess-stat-lbl">USED</span>
-          </div>
-          <div class="sess-stat-card">
-            <span class="sess-stat-num green" id="sess-saved-val">0</span>
-            <span class="sess-stat-lbl">SAVED</span>
-          </div>
-        </div>
-
-        <button class="btn-gradient" onclick="openBuildContextModal()">⚡ Build Context for Task</button>
-
-        <div class="sec-title" style="margin-top:4px;">CUMULATIVE TOKENS SAVED (LIVE)</div>
-        <div class="chart-box">
-          <canvas id="savings-chart" width="260" height="115" style="width:100%; height:100%; display:block;"></canvas>
-        </div>
-
-        <div class="sec-title" style="display:flex; align-items:center; justify-content:space-between;">
-          <span>RECENT ACTIONS (LAST 5)</span>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <button id="view-all-actions-btn" class="modal-btn cancel" style="padding: 2px 8px; font-size: 0.7rem; border-radius: 6px; cursor: pointer;" onclick="openAllActionsModal()">View All</button>
-            <span class="badge" id="recent-count-badge">0</span>
-          </div>
-        </div>
-        <div id="recent-actions-list">
-          <div style="font-size:0.75rem; color:var(--text-dim); font-style:italic;">No session actions recorded yet.</div>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /body -->
-
-  <!-- Status bar -->
-  <div id="statusbar">
-    <span id="status-txt">—</span>
-    <div id="status-right">
-      <span id="status-mode"></span>
-    </div>
-  </div>
-
-</div><!-- /app -->
-
-<div id="tooltip"></div>
-
-<!-- Freeze / Unfreeze Interactive Selection Modal -->
-<div id="freeze-modal" class="modal-overlay">
-  <div class="modal-card">
-    <div class="modal-header">
-      <h3 id="modal-title">❄️ Freeze Files</h3>
-      <button class="modal-close" onclick="closeFreezeModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="modal-subtitle" id="modal-subtitle">Select files to freeze into the ledger:</div>
-      <div class="modal-actions-bar">
-        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none;">
-          <input type="checkbox" id="modal-select-all" onchange="toggleSelectAllModal(this)" />
-          <span id="modal-select-all-label">Freeze All Files</span>
-        </label>
-        <span id="modal-selected-count" style="font-size:0.75rem; color:var(--text-dim);">0 selected</span>
-      </div>
-      <div class="modal-file-list" id="modal-file-list"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="modal-btn cancel" onclick="closeFreezeModal()">Cancel</button>
-      <button class="modal-btn confirm" id="modal-confirm-btn" onclick="submitBatchModal()">Confirm</button>
-    </div>
-  </div>
-</div>
-
-<!-- Build Context Task Modal -->
-<div id="build-context-modal" class="modal-overlay">
-  <div class="modal-card" style="width: 520px;">
-    <div class="modal-header">
-      <h3>⚡ Build Context for Task</h3>
-      <button class="modal-close" onclick="closeBuildContextModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="modal-subtitle">Enter a coding task description to run Token Compression and build an optimized prompt:</div>
-      <textarea id="task-input-text" rows="3" style="width:100%; background:var(--bg); border:1px solid var(--border2); border-radius:8px; padding:10px; color:var(--text); font-family:inherit; font-size:0.85rem; outline:none; resize:none;" placeholder="e.g. refactor authentication and session management"></textarea>
-      
-      <div id="task-result-box" style="display:none; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:14px; margin-top:8px;">
-        <div style="font-size:0.82rem; font-weight:700; color:#38bdf8; margin-bottom:8px;">⚡ Token Compression Complete</div>
-        <div id="task-stats-summary" style="font-size:0.75rem; color:var(--text-muted); line-height:1.6;"></div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="modal-btn cancel" onclick="closeBuildContextModal()">Close</button>
-      <button class="modal-btn confirm" id="btn-run-build-task" onclick="submitBuildContextTask()">⚡ Compress Context</button>
-    </div>
-  </div>
-</div>
-
-<!-- View All Session Actions Modal -->
-<div id="all-actions-modal" class="modal-overlay" onclick="if(event.target===this) closeAllActionsModal()">
-  <div class="modal-card" style="width: 580px; max-height: 80vh; display: flex; flex-direction: column;">
-    <div class="modal-header">
-      <h3>📜 Session Activities</h3>
-      <button class="modal-close" onclick="closeAllActionsModal()">✕</button>
-    </div>
-    <div class="modal-body" style="overflow-y: auto; max-height: 60vh;">
-      <div class="modal-subtitle" style="margin-bottom: 12px;">All activities recorded in the current session (sorted newest to oldest):</div>
-      <div id="all-actions-list"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="modal-btn cancel" onclick="closeAllActionsModal()">Close</button>
-    </div>
-  </div>
-</div>
-
-<!-- Activity Details Modal -->
-<div id="action-details-modal" class="modal-overlay" onclick="if(event.target===this) closeActionDetailsModal()">
-  <div class="modal-card" style="width: 520px;">
-    <div class="modal-header">
-      <h3>🔍 Activity Details</h3>
-      <button class="modal-close" onclick="closeActionDetailsModal()">✕</button>
-    </div>
-    <div class="modal-body" id="action-details-content">
-      <!-- Content populated dynamically -->
-    </div>
-    <div class="modal-footer">
-      <button class="modal-btn cancel" onclick="closeActionDetailsModal()">Close</button>
-    </div>
-  </div>
+  <!-- Floating Tooltip -->
+  <div id="tooltip"></div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════════════
-//  CONSTANTS
-// ═══════════════════════════════════════════════════════════════
-const SIM = {
-  CHARGE:        -420,
-  LINK_DIST:     110,
-  LINK_STR:       0.35,
-  ALPHA_DECAY:    0.022,
-  VEL_DECAY:      0.38,
-  COLLIDE_PAD:   18,
+// ═════════════════════════════════════════════════════════════════════════════
+//  STATE & CONFIGURATION
+// ═════════════════════════════════════════════════════════════════════════════
+let graphData = { nodes: [], links: [], stats: {} };
+let simulation = null;
+let svg = null;
+let gRoot = null;
+let zoomBehavior = null;
+let currentLayoutMode = 'cluster'; // 'cluster' | 'connected' | 'force'
+let selectedNode = null;
+let searchQuery = '';
+
+// Folder Color Palette
+const FOLDER_COLORS = {
+  root: '#94a3b8',
+  app: '#60a5fa',
+  components: '#a78bfa',
+  lib: '#34d399',
+  hooks: '#fbbf24',
+  utils: '#f59e0b',
+  prisma: '#38bdf8',
+  scratch: '#f472b6',
+  scripts: '#c084fc',
+  voice: '#2dd4bf',
+  core: '#60a5fa',
+  graph: '#34d399',
+  ledger: '#06b6d4',
+  prompt_compression: '#a78bfa',
+  api: '#38bdf8',
+  sessions: '#f59e0b',
+  default: '#64748b'
 };
 
-// Folder → colour
-const FOLDER_COLOR = {
-  root:       '#94a3b8',
-  core:       '#60a5fa',
-  config:     '#a78bfa',
-  graph:      '#34d399',
-  utils:      '#fbbf24',
-  tests:      '#f87171',
-  api:        '#38bdf8',
-  visualizer: '#f472b6',
-};
-function folderColor(group) { return FOLDER_COLOR[group] || '#94a3b8'; }
-
-// Pill sizing
-const PILL_H = 30;
-function pillW(label) { return Math.max(label.length * 7.2 + 32, 80); }
-
-// ═══════════════════════════════════════════════════════════════
-//  STATE
-// ═══════════════════════════════════════════════════════════════
-let G         = null;   // raw graph data
-let sim       = null;
-let svgRoot   = null;
-let zoomB     = null;
-let selId     = null;   // clicked node
-let pathStart = null;
-let pathEnd   = null;
-let pathSet   = new Set();
-let q         = '';
-let folderFlt = 'all';
-let lockFlt   = 'all';
-let folderMap = {};     // group → [nodes]
-
-// ═══════════════════════════════════════════════════════════════
-//  INIT
-// ═══════════════════════════════════════════════════════════════
-async function init() {
-  try {
-    const r = await fetch('/api/graph');
-    if (!r.ok) throw new Error(await r.text());
-    G = await r.json();
-  } catch(e) {
-    document.getElementById('loading').innerHTML =
-      `<h2 style="color:#f87171">Error</h2><p>${e.message}</p>`;
-    return;
-  }
-
-  // Stats
-  const s = G.stats || {};
-  document.getElementById('s-files').textContent = s.total_files ?? '—';
-  document.getElementById('s-edges').textContent = s.total_connections ?? '—';
-  document.getElementById('s-hub').textContent   = (s.most_connected_file||'—').split('/').pop();
-
-  // Folder filter pills
-  folderMap = {};
-  G.nodes.forEach(n => {
-    folderMap[n.group] = folderMap[n.group] || [];
-    folderMap[n.group].push(n);
-  });
-  const ff = document.getElementById('folder-filters');
-  if (ff) {
-    Object.entries(folderMap).forEach(([g, nodes]) => {
-      const pill = document.createElement('div');
-      pill.className = 'filter-pill';
-      pill.dataset.folder = g;
-      pill.onclick = () => setFolder(pill);
-      pill.innerHTML = `<div class="dot" style="background:${folderColor(g)}"></div>${g} <span style="color:var(--text-dim)">${nodes.length}</span>`;
-      ff.appendChild(pill);
-    });
-  }
-
-  // Legend
-  buildLegend();
-
-  // Status
-  setStatus();
-
-  // Show app
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('app').style.display     = 'flex';
-
-  buildGraph();
-  attachControls();
-  updateFlyoutFilterCounts();
-
-  // Default sidebar panel open with Session Memory view active by default
-  document.getElementById('panel').classList.add('open');
-  switchPanelTab('session');
+function getFolderColor(folder) {
+  return FOLDER_COLORS[folder] || FOLDER_COLORS.default;
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  LEGEND
-// ═══════════════════════════════════════════════════════════════
-function buildLegend() {
-  const list = document.getElementById('legend-list');
-  list.innerHTML = '';
-  Object.entries(folderMap).forEach(([g, nodes]) => {
-    const row = document.createElement('div');
-    row.className = 'leg-row';
-    row.innerHTML = `<div class="leg-dot" style="background:${folderColor(g)}"></div>
-      <span class="leg-name">${g}</span>
-      <span class="leg-count">${nodes.length}</span>`;
-    row.onclick = () => { setFolderByName(g); };
-    list.appendChild(row);
-  });
-}
+// ═════════════════════════════════════════════════════════════════════════════
+//  INITIALIZATION
+// ═════════════════════════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', async () => {
+  setupSVG();
+  setupSearch();
+  await refreshAll();
 
-// ═══════════════════════════════════════════════════════════════
-//  GRAPH BUILD
-// ═══════════════════════════════════════════════════════════════
-function buildGraph() {
-  const svg = d3.select('#g');
-  svg.selectAll('*').remove();
+  // Live Auto-Refresh every 4 seconds
+  setInterval(async () => {
+    await fetchSessionData();
+  }, 4000);
+});
 
-  const W = svg.node().clientWidth  || window.innerWidth  - 310;
-  const H = svg.node().clientHeight || window.innerHeight - 86;
+function setupSVG() {
+  const container = document.getElementById('canvas-container');
+  const width = container.clientWidth;
+  const height = container.clientHeight;
 
-  // Defs
+  svg = d3.select('#graph-svg')
+    .attr('width', width)
+    .attr('height', height);
+
+  // Define SVG Marker Arrows for Directed Links
   const defs = svg.append('defs');
-  // Arrow markers
-  addArrow(defs, 'arr',      'rgba(100,116,175,0.6)', 20);
-  addArrow(defs, 'arr-hi',   '#fbbf24', 18);
-  addArrow(defs, 'arr-path', '#00f3ff', 24);
-  addArrow(defs, 'arr-start','#4ade80', 18);
+  defs.append('marker')
+    .attr('id', 'arrow')
+    .attr('viewBox', '0 0 10 10')
+    .attr('refX', 8)
+    .attr('refY', 5)
+    .attr('markerWidth', 6)
+    .attr('markerHeight', 6)
+    .attr('orient', 'auto')
+    .append('path')
+    .attr('d', 'M 0 1 L 9 5 L 0 9 z')
+    .attr('fill', 'rgba(100, 116, 175, 0.45)');
 
-  // Glow filter
-  const f = defs.append('filter').attr('id','glow').attr('x','-60%').attr('y','-60%').attr('width','220%').attr('height','220%');
-  f.append('feGaussianBlur').attr('stdDeviation','5').attr('result','blur');
-  const m = f.append('feMerge');
-  m.append('feMergeNode').attr('in','blur');
-  m.append('feMergeNode').attr('in','SourceGraphic');
+  defs.append('marker')
+    .attr('id', 'arrow-highlighted')
+    .attr('viewBox', '0 0 10 10')
+    .attr('refX', 8)
+    .attr('refY', 5)
+    .attr('markerWidth', 6)
+    .attr('markerHeight', 6)
+    .attr('orient', 'auto')
+    .append('path')
+    .attr('d', 'M 0 1 L 9 5 L 0 9 z')
+    .attr('fill', '#38bdf8');
 
-  // Zoom
-  zoomB = d3.zoom().scaleExtent([0.05, 8]).on('zoom', e => svgRoot.attr('transform', e.transform));
-  svg.call(zoomB);
-  svg.on('dblclick.zoom', () => fitGraph());
-  svg.on('click', () => { deselect(); });
+  defs.append('marker')
+    .attr('id', 'arrow-path')
+    .attr('viewBox', '0 0 10 10')
+    .attr('refX', 8)
+    .attr('refY', 5)
+    .attr('markerWidth', 7)
+    .attr('markerHeight', 7)
+    .attr('orient', 'auto')
+    .append('path')
+    .attr('d', 'M 0 1 L 9 5 L 0 9 z')
+    .attr('fill', '#10b981');
 
-  svgRoot = svg.append('g');
-
-  render(W, H);
-}
-
-function addArrow(defs, id, color, refX) {
-  defs.append('marker').attr('id', id)
-    .attr('viewBox','0 -5 10 10').attr('refX', refX).attr('refY', 0)
-    .attr('markerWidth', 6).attr('markerHeight', 6).attr('orient','auto')
-    .append('path').attr('d','M0,-5L10,0L0,5').attr('fill', color);
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  RENDER
-// ═══════════════════════════════════════════════════════════════
-function render(W, H) {
-  // Deep-copy nodes & links (D3 mutates them)
-  const nodes = G.nodes.map(d => {
-    const isFrozen = d.lock_status === 'frozen' || d.lock_status === 'partially_frozen';
-    return {
-      ...d,
-      pw: pillW(d.label),
-      fx: isFrozen ? (d.x != null ? d.x : undefined) : null,
-      fy: isFrozen ? (d.y != null ? d.y : undefined) : null
-    };
-  });
-  const links = G.links.map(l => ({...l}));
-
-  // ── Simulation ────────────────────────────────────────────────
-  sim = d3.forceSimulation(nodes)
-    .force('link',    d3.forceLink(links).id(d=>d.id).distance(SIM.LINK_DIST).strength(SIM.LINK_STR))
-    .force('charge',  d3.forceManyBody().strength(SIM.CHARGE))
-    .force('center',  d3.forceCenter(W/2, H/2))
-    .force('collide', d3.forceCollide(d => d.pw/2 + SIM.COLLIDE_PAD))
-    .alphaDecay(SIM.ALPHA_DECAY)
-    .velocityDecay(SIM.VEL_DECAY);
-
-  // ── Hull layer ────────────────────────────────────────────────
-  const hullG = svgRoot.append('g').attr('class','hulls');
-
-  // ── Links ─────────────────────────────────────────────────────
-  const linkG = svgRoot.append('g').attr('class','links');
-  const link = linkG.selectAll('line')
-    .data(links).join('line')
-    .attr('class','link')
-    .attr('stroke', d => {
-      const tgt = G.nodes.find(n => n.id === (d.target.id||d.target));
-      return tgt ? folderColor(tgt.group) + '60' : 'rgba(100,116,175,0.35)';
-    })
-    .attr('stroke-width', d => {
-      const tgt = G.nodes.find(n => n.id === (d.target.id||d.target));
-      return tgt && tgt.imported_by_count >= 3 ? 2.5 : 1.2;
-    })
-    .attr('marker-end','url(#arr)');
-
-  // ── Path Overlay layer ─────────────────────────────────────────
-  svgRoot.append('g').attr('class', 'path-overlay-layer');
-
-  // ── Node groups ───────────────────────────────────────────────
-  const nodeG = svgRoot.append('g').attr('class','nodes')
-    .selectAll('g').data(nodes, d=>d.id)
-    .join('g')
-    .attr('class', d => {
-      const isFrozen = d.lock_status === 'frozen' || d.lock_status === 'partially_frozen';
-      return `node-pill ${isFrozen ? 'is-frozen' : ''}`;
-    })
-    .attr('id', d => 'np-' + safeId(d.id))
-    .call(d3.drag()
-      .on('start', (e,d) => { if(!e.active) sim.alphaTarget(.3).restart(); d.fx=d.x; d.fy=d.y; })
-      .on('drag',  (e,d) => { d.fx=e.x; d.fy=e.y; })
-      .on('end',   (e,d) => {
-        if(!e.active) sim.alphaTarget(0);
-        const isFrozen = d.lock_status === 'frozen' || d.lock_status === 'partially_frozen';
-        if (!isFrozen) {
-          d.fx = null;
-          d.fy = null;
-        }
-      })
-    );
-
-  const isFrz = d => d.lock_status === 'frozen' || d.lock_status === 'partially_frozen';
-
-  // Background pill
-  nodeG.append('rect')
-    .attr('width',  d => d.pw)
-    .attr('height', PILL_H)
-    .attr('x', d => -d.pw/2)
-    .attr('y', -PILL_H/2)
-    .attr('rx', 8)
-    .attr('fill',   d => isFrz(d) ? '#18181b' : folderColor(d.group) + '18')
-    .attr('stroke', d => isFrz(d) ? '#71717a' : folderColor(d.group))
-    .attr('stroke-width', d => isFrz(d) ? 1.8 : 1.2)
-    .on('mouseover', onHover)
-    .on('mousemove', onMove)
-    .on('mouseout',  onOut)
-    .on('click',     onClick);
-
-  // Left accent bar
-  nodeG.append('rect')
-    .attr('width', 4)
-    .attr('height', PILL_H - 6)
-    .attr('x', d => -d.pw/2 + 4)
-    .attr('y', -PILL_H/2 + 3)
-    .attr('rx', 2)
-    .attr('fill', d => isFrz(d) ? '#71717a' : folderColor(d.group))
-    .attr('fill-opacity', d => isFrz(d) ? 0.6 : 0.85)
-    .attr('pointer-events','none');
-
-  // Filename text
-  nodeG.append('text')
-    .attr('x', d => 5)
-    .attr('y', 0)
-    .attr('dominant-baseline','central')
-    .attr('text-anchor','middle')
-    .attr('font-size', 11)
-    .attr('font-family','Inter,system-ui,sans-serif')
-    .attr('font-weight', d => isFrz(d) ? 600 : 500)
-    .attr('fill', d => isFrz(d) ? '#ffffff' : folderColor(d.group))
-    .attr('pointer-events','none')
-    .text(d => d.label);
-
-  // fn count badge (top-right)
-  nodeG.filter(d => d.functions && d.functions.length > 0)
-    .append('rect')
-    .attr('width', 20).attr('height', 14)
-    .attr('x', d => d.pw/2 - 22)
-    .attr('y', -PILL_H/2 - 6)
-    .attr('rx', 4)
-    .attr('fill', d => isFrz(d) ? '#3f3f46' : folderColor(d.group))
-    .attr('fill-opacity', 0.85)
-    .attr('pointer-events','none');
-
-  nodeG.filter(d => d.functions && d.functions.length > 0)
-    .append('text')
-    .attr('class','fn-badge')
-    .attr('x', d => d.pw/2 - 12)
-    .attr('y', -PILL_H/2 + 1)
-    .attr('dominant-baseline','central')
-    .attr('text-anchor','middle')
-    .attr('font-size', 9)
-    .attr('font-family','Inter,monospace')
-    .attr('font-weight',700)
-    .attr('fill', d => isFrz(d) ? '#ffffff' : '#0d0f18')
-    .attr('pointer-events','none')
-    .text(d => d.functions.length);
-
-  // Padlock icon
-  nodeG.filter(d => isFrz(d) || d.lock_status === 'tampered')
-    .append('text')
-    .attr('x', d => -d.pw/2 + 10)
-    .attr('y', 0)
-    .attr('dominant-baseline','central')
-    .attr('text-anchor','middle')
-    .attr('font-size', 10)
-    .text('🔒')
-    .attr('pointer-events','none');
-
-  // Glow ring
-  nodeG.append('rect')
-    .attr('class', d => `glow-ring ${d.lock_status || ''}`)
-    .attr('width',  d => d.pw + 8)
-    .attr('height', PILL_H + 8)
-    .attr('x', d => -d.pw/2 - 4)
-    .attr('y', -PILL_H/2 - 4)
-    .attr('rx', 11)
-    .attr('stroke', d => folderColor(d.group))
-    .attr('opacity', d => (d.lock_status === 'frozen' || d.lock_status === 'partially_frozen' || d.lock_status === 'tampered') ? 1 : 0);
-
-  // ── Tick ─────────────────────────────────────────────────────
-  sim.on('tick', () => {
-    // Pin physics for frozen nodes so they stop moving
-    nodes.forEach(d => {
-      const isFrozen = d.lock_status === 'frozen' || d.lock_status === 'partially_frozen';
-      if (isFrozen) {
-        if (d.fx == null && d.x != null) d.fx = d.x;
-        if (d.fy == null && d.y != null) d.fy = d.y;
-      }
+  zoomBehavior = d3.zoom()
+    .scaleExtent([0.15, 4.0])
+    .on('zoom', (e) => {
+      gRoot.attr('transform', e.transform);
     });
 
-    link
-      .attr('x1', d => d.source.x)
-      .attr('y1', d => d.source.y)
-      .attr('x2', d => d.target.x)
-      .attr('y2', d => d.target.y);
+  svg.call(zoomBehavior);
+  gRoot = svg.append('g').attr('class', 'zoom-root');
 
-    nodeG.attr('transform', d => `translate(${d.x},${d.y})`);
-
-    // Hulls per folder
-    const grps = d3.group(nodes, d => d.group);
-    hullG.selectAll('path').data([...grps.entries()])
-      .join('path')
-      .attr('class','hull')
-      .attr('d', ([, ns]) => {
-        const pts = ns.flatMap(d => [
-          [d.x - d.pw/2 - 14, d.y - PILL_H/2 - 14],
-          [d.x + d.pw/2 + 14, d.y - PILL_H/2 - 14],
-          [d.x - d.pw/2 - 14, d.y + PILL_H/2 + 14],
-          [d.x + d.pw/2 + 14, d.y + PILL_H/2 + 14],
-        ]);
-        if (pts.length < 3) return null;
-        const hull = d3.polygonHull(pts);
-        return hull ? 'M' + hull.map(p => p.join(',')).join('L') + 'Z' : null;
-      })
-      .attr('fill',   ([g]) => folderColor(g))
-      .attr('stroke', ([g]) => folderColor(g))
-      .attr('fill-opacity', .05)
-      .attr('stroke-opacity', .18)
-      .attr('stroke-width', 1.5)
-      .attr('stroke-dasharray','6,4');
+  window.addEventListener('resize', () => {
+    const w = container.clientWidth;
+    const h = container.clientHeight;
+    svg.attr('width', w).attr('height', h);
+    if (simulation) {
+      simulation.force('center', d3.forceCenter(w / 2, h / 2));
+      simulation.alpha(0.3).restart();
+    }
   });
-
-  updatePathOverlayPositions();
-  applyFilter();
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  HOVER
-// ═══════════════════════════════════════════════════════════════
-function onHover(event, d) {
-  const tip = document.getElementById('tooltip');
-  const col = folderColor(d.group);
-  tip.innerHTML = `
-    <div class="tip-file">${d.label}</div>
-    <span class="tip-folder" style="background:${col}22;color:${col};border:1px solid ${col}44">${d.group}</span>
-    <div class="tip-row"><span>Functions</span><b>${d.functions?.length||0}</b></div>
-    <div class="tip-row"><span>Classes</span><b>${d.classes?.length||0}</b></div>
-    <div class="tip-row"><span>Imports</span><b>${d.imports_count||0}</b></div>
-    <div class="tip-row"><span>Imported by</span><b>${d.imported_by_count||0}</b></div>
-    ${d.summary ? `<div style="margin-top:6px;font-size:.7rem;color:var(--text-dim);font-style:italic">${d.summary}</div>` : ''}
-    ${d.lock_status === 'frozen' || d.lock_status === 'partially_frozen' ? `<div style="margin-top:6px;font-size:.7rem;color:#e74c3c;font-weight:bold;">🔒 FROZEN — ${d.locked_functions && d.locked_functions.length ? d.locked_functions.join(', ') : 'entire file'}</div>` : ''}
-  `;
-  tip.style.opacity = '1';
-  onMove(event);
-  highlightNode(d.id);
-}
-function onMove(event) {
-  const tip = document.getElementById('tooltip');
-  let x = event.clientX + 16, y = event.clientY + 16;
-  if (x + tip.offsetWidth  > window.innerWidth)  x = event.clientX - tip.offsetWidth  - 16;
-  if (y + tip.offsetHeight > window.innerHeight) y = event.clientY - tip.offsetHeight - 16;
-  tip.style.left = x + 'px'; tip.style.top = y + 'px';
-}
-function onOut() {
-  document.getElementById('tooltip').style.opacity = '0';
-  if (pathSet.size > 0) applyPathStyle();
-  else resetStyle();
+function handleZoom(factor) {
+  svg.transition().duration(250).call(zoomBehavior.scaleBy, factor);
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  HIGHLIGHT
-// ═══════════════════════════════════════════════════════════════
-function highlightNode(id) {
-  const connected = new Set([id]);
-  G.links.forEach(l => {
-    const s=l.source.id||l.source, t=l.target.id||l.target;
-    if(s===id) connected.add(t);
-    if(t===id) connected.add(s);
-  });
-  svgRoot.selectAll('.node-pill rect:first-child')
-    .attr('fill-opacity', d => connected.has(d.id) ? folderColor(d.group)+'28' : folderColor(d.group)+'06')
-    .attr('stroke-opacity', d => connected.has(d.id) ? 1 : 0.2);
-  svgRoot.selectAll('.node-pill text').attr('opacity', d => connected.has(d.id) ? 1 : 0.2);
-  svgRoot.selectAll('.link')
-    .attr('stroke', d => {
-      const s=d.source.id||d.source, t=d.target.id||d.target;
-      if(s===id||t===id) return '#fbbf24';
-      return 'rgba(100,116,175,0.1)';
-    })
-    .attr('stroke-opacity', d => {
-      const s=d.source.id||d.source, t=d.target.id||d.target;
-      return (s===id||t===id) ? 1 : 0.08;
-    })
-    .attr('stroke-width', d => {
-      const s=d.source.id||d.source, t=d.target.id||d.target;
-      return (s===id||t===id) ? 2 : 1;
-    })
-    .attr('marker-end', d => {
-      const s=d.source.id||d.source, t=d.target.id||d.target;
-      return (s===id||t===id) ? 'url(#arr-hi)' : 'url(#arr)';
-    });
+function resetZoom() {
+  const container = document.getElementById('canvas-container');
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+  svg.transition().duration(400).call(
+    zoomBehavior.transform,
+    d3.zoomIdentity.translate(w / 2, h / 2).scale(0.85).translate(-w / 2, -h / 2)
+  );
 }
 
-function resetStyle() {
-  currentPathArray = [];
-  if (svgRoot) {
-    svgRoot.select('.path-overlay-layer').selectAll('*').remove();
-    svgRoot.selectAll('.node-pill').attr('opacity', 1);
+// ═════════════════════════════════════════════════════════════════════════════
+//  DATA FETCHING & REFRESH
+// ═════════════════════════════════════════════════════════════════════════════
+async function refreshAll() {
+  await Promise.all([fetchGraphData(), fetchSessionData()]);
+}
+
+async function manualRefresh() {
+  await refreshAll();
+  const btn = document.querySelector('button[title*="Sync live"]');
+  if (btn) {
+    btn.textContent = '✓ Updated';
+    setTimeout(() => { btn.textContent = '🔄 Refresh'; }, 1200);
   }
-  svgRoot.selectAll('.node-pill rect:first-child')
-    .attr('fill-opacity', d => folderColor(d.group)+'18')
-    .attr('stroke', d => (d.lock_status === 'frozen' || d.lock_status === 'partially_frozen') ? '#71717a' : folderColor(d.group))
-    .attr('stroke-width', d => (d.lock_status === 'frozen' || d.lock_status === 'partially_frozen') ? 1.8 : 1.2)
-    .attr('stroke-opacity', 1);
-  svgRoot.selectAll('.node-pill text').attr('opacity', 1);
-  svgRoot.selectAll('.link')
-    .attr('stroke', d => {
-      const tgt = G.nodes.find(n=>n.id===(d.target.id||d.target));
-      return tgt ? folderColor(tgt.group)+'60' : 'rgba(100,116,175,0.35)';
-    })
-    .attr('stroke-opacity', 0.7)
-    .attr('stroke-width', d => {
-      const tgt = G.nodes.find(n=>n.id===(d.target.id||d.target));
-      return tgt && tgt.imported_by_count>=3 ? 2.5 : 1.2;
-    })
-    .attr('marker-end','url(#arr)');
-  svgRoot.selectAll('.glow-ring').each(function(d) {
-    const isFrz = d && (d.lock_status === 'frozen' || d.lock_status === 'partially_frozen' || d.lock_status === 'tampered');
-    d3.select(this)
-      .attr('stroke', d ? folderColor(d.group) : '#ffffff')
-      .attr('opacity', isFrz ? 0.6 : 0)
-      .attr('filter', null);
-  });
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  CLICK
-// ═══════════════════════════════════════════════════════════════
-async function onClick(event, d) {
-  event.stopPropagation();
-  selId = d.id;
-  openPanel(d);
-  svgRoot.selectAll('.glow-ring').attr('opacity', d => (d && (d.lock_status === 'frozen' || d.lock_status === 'partially_frozen' || d.lock_status === 'tampered')) ? 1 : 0);
-  svgRoot.select('#np-'+safeId(d.id)+' .glow-ring')
-    .attr('opacity',.9)
-    .attr('filter','url(#glow)');
-
+async function fetchGraphData() {
   try {
-    const r = await fetch('/api/file?path='+encodeURIComponent(d.id));
-    if(r.ok) updatePanel(await r.json());
-  } catch(_) {}
-}
-
-function deselect() {
-  selId = null;
-  switchPanelTab('session');
-  svgRoot.selectAll('.glow-ring').attr('opacity', d => (d && (d.lock_status === 'frozen' || d.lock_status === 'partially_frozen' || d.lock_status === 'tampered')) ? 1 : 0);
-  if(pathSet.size>0) applyPathStyle(); else resetStyle();
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  PANEL
-// ═══════════════════════════════════════════════════════════════
-function openPanel(d) {
-  selId = d.id;
-  const col = folderColor(d.group);
-  document.getElementById('panel').classList.add('open');
-  document.getElementById('panel-folder-dot').style.background = col;
-  document.getElementById('panel-folder-name').textContent = d.group;
-  document.getElementById('panel-folder-name').style.color = col;
-  document.getElementById('panel-file').textContent = d.label;
-  document.getElementById('panel-summary').textContent = d.summary || '';
-  document.getElementById('pm-fns').textContent = d.functions?.length || 0;
-  document.getElementById('pm-cls').textContent = d.classes?.length  || 0;
-  document.getElementById('pm-imp').textContent = d.imports_count     || 0;
-  document.getElementById('pm-iby').textContent = d.imported_by_count || 0;
-  chips('pnl-fns','cnt-fns', d.functions, 'fn');
-  chips('pnl-cls','cnt-cls', d.classes,   'cls');
-  chips('pnl-imp','cnt-imp', d.imports,   'imp');
-  chips('pnl-iby','cnt-iby', d.imported_by||[], 'iby', true);
-  document.getElementById('src-preview').textContent = '';
-
-  updateFreezeUI(d);
-  switchPanelTab('node');
-}
-
-function updateFreezeUI(d) {
-  const btn = document.getElementById('pf-lock');
-  if (!btn) return;
-  const isFrozen = d.lock_status === 'frozen' || d.lock_status === 'partially_frozen';
-  if (isFrozen) {
-    btn.innerHTML = '🔓 Unfreeze File';
-    btn.style.borderColor = '#ef4444';
-    btn.style.color = '#ef4444';
-    btn.style.background = 'rgba(239, 68, 68, 0.15)';
-  } else {
-    btn.innerHTML = '❄️ Freeze File';
-    btn.style.borderColor = '#3b82f6';
-    btn.style.color = '#60a5fa';
-    btn.style.background = 'rgba(59, 130, 246, 0.15)';
-  }
-}
-
-function updatePanel(detail) {
-  chips('pnl-fns','cnt-fns', detail.functions,   'fn');
-  chips('pnl-cls','cnt-cls', detail.classes,     'cls');
-  chips('pnl-imp','cnt-imp', detail.imports,     'imp');
-  chips('pnl-iby','cnt-iby', detail.imported_by, 'iby', true);
-  document.getElementById('pm-fns').textContent = detail.functions?.length || 0;
-  document.getElementById('pm-cls').textContent = detail.classes?.length   || 0;
-  document.getElementById('pm-imp').textContent = detail.imports?.length   || 0;
-  document.getElementById('pm-iby').textContent = detail.imported_by?.length || 0;
-  document.getElementById('src-preview').textContent = detail.source_preview?.join('\n') || '';
-}
-
-function chips(wrId, cntId, arr, cls, clickable) {
-  const el = document.getElementById(wrId);
-  const ct = document.getElementById(cntId);
-  if (!arr || !arr.length) {
-    el.innerHTML = '<span class="empty">—</span>';
-    if(ct) ct.textContent = '0';
-    return;
-  }
-  if(ct) ct.textContent = arr.length;
-  el.innerHTML = arr.map(v =>
-    `<span class="chip ${cls}" ${clickable ? `onclick="navTo('${v}')"` : ''} title="${v}">${v}</span>`
-  ).join('');
-}
-
-function navTo(id, el) {
-  zoomToNode(id, el);
-}
-
-function zoomToNode(id, el) {
-  if (el) {
-    document.querySelectorAll('.tree-item').forEach(item => item.classList.remove('active'));
-    el.classList.add('active');
-  }
-  const n = G.nodes.find(x => x.id === id || x.id.endsWith(id));
-  if (!n) return;
-
-  openPanel(n);
-  selId = n.id;
-
-  svgRoot.selectAll('.glow-ring').attr('opacity', d => (d && (d.lock_status === 'frozen' || d.lock_status === 'partially_frozen' || d.lock_status === 'tampered')) ? 1 : 0);
-  svgRoot.select('#np-' + safeId(n.id) + ' .glow-ring')
-    .attr('opacity', 0.9)
-    .attr('filter', 'url(#glow)');
-
-  const svg = d3.select('#g');
-  if (!svg.node()) return;
-  const W = svg.node().clientWidth, H = svg.node().clientHeight;
-  const sc = 1.4;
-  const tx = W / 2 - sc * (n.x != null ? n.x : W / 2);
-  const ty = H / 2 - sc * (n.y != null ? n.y : H / 2);
-  svg.transition().duration(650).call(zoomB.transform, d3.zoomIdentity.translate(tx, ty).scale(sc));
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  FILTER
-// ═══════════════════════════════════════════════════════════════
-
-document.getElementById('search').addEventListener('input', e => {
-  q = e.target.value.toLowerCase().trim();
-  applyFilter();
-});
-
-function setFolder(pill) {
-  document.querySelectorAll('#folder-filters .filter-pill').forEach(p=>p.classList.remove('active'));
-  pill.classList.add('active');
-  folderFlt = pill.dataset.folder;
-  applyFilter();
-}
-
-function setLockFilter(pill) {
-  const lockType = pill.dataset.lock;
-  if (lockType === 'freeze') {
-    openBatchModal('freeze');
-    return;
-  }
-  if (lockType === 'unfreeze') {
-    openBatchModal('unfreeze');
-    return;
-  }
-
-  document.querySelectorAll('#lock-filters .hdr-btn').forEach(p => p.classList.remove('active'));
-  pill.classList.add('active');
-
-  if (lockType === 'all') {
-    resetAllFilters();
-  } else {
-    lockFlt = lockType;
-    applyFilter();
-  }
-}
-
-function resetAllFilters() {
-  lockFlt = 'all';
-  q = '';
-  const searchInput = document.getElementById('search');
-  if (searchInput) searchInput.value = '';
-
-  selectedCategories = new Set(['all']);
-  document.querySelectorAll('.fly-cat-item').forEach(item => {
-    if (item.dataset.cat === 'all') item.classList.add('active');
-    else item.classList.remove('active');
-  });
-
-  impactFilterActive = false;
-  const impactBtn = document.getElementById('fly-impact-btn');
-  if (impactBtn) impactBtn.classList.remove('active');
-
-  clearPath();
-  resetStyle();
-  applyFilter();
-  updateFlyoutFilterCounts();
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  INTERACTIVE BATCH FREEZE / UNFREEZE MODAL
-// ═══════════════════════════════════════════════════════════════
-let currentBatchMode = 'freeze';
-
-function openBatchModal(mode) {
-  currentBatchMode = mode;
-  const modal = document.getElementById('freeze-modal');
-  const title = document.getElementById('modal-title');
-  const subtitle = document.getElementById('modal-subtitle');
-  const selectAllLabel = document.getElementById('modal-select-all-label');
-  const confirmBtn = document.getElementById('modal-confirm-btn');
-  const fileList = document.getElementById('modal-file-list');
-  const selectAll = document.getElementById('modal-select-all');
-
-  selectAll.checked = false;
-  selectAll.indeterminate = false;
-
-  let targetNodes = [];
-  if (mode === 'freeze') {
-    title.textContent = '❄️ Freeze Files';
-    subtitle.textContent = 'Select unfrozen files to freeze into the ledger:';
-    selectAllLabel.textContent = 'Freeze All Files';
-    confirmBtn.textContent = '❄️ Freeze Selected Files';
-    confirmBtn.className = 'modal-btn confirm';
-    targetNodes = G.nodes.filter(n => n.lock_status !== 'frozen' && n.lock_status !== 'partially_frozen');
-  } else {
-    title.textContent = '🔓 Unfreeze Files';
-    subtitle.textContent = 'Select frozen files to unfreeze from the ledger:';
-    selectAllLabel.textContent = 'Unfreeze All Files';
-    confirmBtn.textContent = '🔓 Unfreeze Selected Files';
-    confirmBtn.className = 'modal-btn confirm unfreeze';
-    targetNodes = G.nodes.filter(n => n.lock_status === 'frozen' || n.lock_status === 'partially_frozen');
-  }
-
-  if (targetNodes.length === 0) {
-    fileList.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px; font-size:0.85rem;">
-      ${mode === 'freeze' ? '✅ All files in this project are already frozen!' : 'ℹ️ No files are currently frozen.'}
-    </div>`;
-    document.getElementById('modal-selected-count').textContent = '0 files';
-  } else {
-    fileList.innerHTML = targetNodes.map(n => `
-      <label class="modal-file-item">
-        <input type="checkbox" class="modal-file-checkbox" value="${n.id}" onchange="updateModalCount()" />
-        <span class="modal-file-name">${n.id}</span>
-        <span class="modal-file-badge" style="background:${folderColor(n.group)}22; color:${folderColor(n.group)}; border:1px solid ${folderColor(n.group)}44">${n.group}</span>
-      </label>
-    `).join('');
-    updateModalCount();
-  }
-
-  modal.classList.add('open');
-}
-
-function closeFreezeModal() {
-  document.getElementById('freeze-modal').classList.remove('open');
-}
-
-function toggleSelectAllModal(masterCb) {
-  const checkboxes = document.querySelectorAll('.modal-file-checkbox');
-  checkboxes.forEach(cb => cb.checked = masterCb.checked);
-  updateModalCount();
-}
-
-function updateModalCount() {
-  const allCbs = document.querySelectorAll('.modal-file-checkbox');
-  const checkedCbs = document.querySelectorAll('.modal-file-checkbox:checked');
-  const selectAll = document.getElementById('modal-select-all');
-  
-  if (allCbs.length > 0 && checkedCbs.length === allCbs.length) {
-    selectAll.checked = true;
-    selectAll.indeterminate = false;
-  } else if (checkedCbs.length > 0) {
-    selectAll.checked = false;
-    selectAll.indeterminate = true;
-  } else {
-    selectAll.checked = false;
-    selectAll.indeterminate = false;
-  }
-  
-  document.getElementById('modal-selected-count').textContent = `${checkedCbs.length} of ${allCbs.length} selected`;
-}
-
-async function submitBatchModal() {
-  const checkboxes = document.querySelectorAll('.modal-file-checkbox:checked');
-  if (!checkboxes || checkboxes.length === 0) {
-    alert('Please select at least one file to proceed.');
-    return;
-  }
-  const selectedFiles = Array.from(checkboxes).map(cb => cb.value);
-
-  closeFreezeModal();
-
-  if (currentBatchMode === 'freeze') {
-    try {
-      await fetch('/api/ledger/lock_batch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file_paths: selectedFiles, reason: "Frozen via Visualizer UI" })
-      });
-    } catch (err) {
-      console.error('Error in batch freeze:', err);
-    }
-    await refreshGraphState();
-  } else {
-    try {
-      await fetch('/api/ledger/unlock_batch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file_paths: selectedFiles })
-      });
-    } catch (err) {
-      console.error('Error in batch unfreeze:', err);
-    }
-    await refreshGraphState();
-  }
-}
-
-async function refreshGraphState() {
-  try {
-    const r = await fetch('/api/graph');
-    if (!r.ok) return;
-    G = await r.json();
-
-    buildGraph();
-    updateFlyoutFilterCounts();
-
-    // Reset lock filter to Show All so all nodes remain fully visible
-    document.querySelectorAll('#lock-filters .filter-pill').forEach(p=>p.classList.remove('active'));
-    const allPill = document.querySelector('#lock-filters .filter-pill[data-lock="all"]');
-    if (allPill) allPill.classList.add('active');
-    lockFlt = 'all';
-
-    applyFilter();
-
-    if (selId) {
-      const currentSelNode = G.nodes.find(n => n.id === selId);
-      if (currentSelNode) updateFreezeUI(currentSelNode);
-    }
+    const res = await fetch('/api/graph');
+    if (!res.ok) return;
+    graphData = await res.json();
+    populateFilesDatalist();
+    renderGraph();
+    updateHeaderStats();
   } catch (err) {
-    console.error('Failed to refresh graph state silently:', err);
-  }
-}
-
-function setFolderByName(name) {
-  const pill = document.querySelector(`.filter-pill[data-folder="${name}"]`);
-  if(pill) setFolder(pill);
-}
-
-let impactFilterActive = false;
-let selectedCategories = new Set(['all']);
-
-function matchesCategory(n, cat) {
-  if (!n) return false;
-  const gid = (n.group || '').toLowerCase();
-  const path = (n.id || '').toLowerCase();
-
-  if (cat === 'all') return true;
-
-  if (cat === 'core') {
-    return gid === 'core' || path.startsWith('core/') || path === 'main.py' || path.includes('scanner');
-  }
-  if (cat === 'compression') {
-    return gid === 'config' || gid === 'utils' || path.includes('compression') || path.includes('prompt') || path.startsWith('prompt_compression/') || path.includes('retriever') || path.includes('compressor');
-  }
-  if (cat === 'api') {
-    return gid === 'api' || gid === 'visualizer' || path.startsWith('api/') || path.startsWith('visualizer/') || path.includes('server');
-  }
-  if (cat === 'tests') {
-    return gid === 'tests' || path.startsWith('tests/') || path.includes('test');
-  }
-
-  return false;
-}
-
-function matchesSelectedCategories(node) {
-  if (!selectedCategories || selectedCategories.has('all')) return true;
-  for (let cat of selectedCategories) {
-    if (matchesCategory(node, cat)) return true;
-  }
-  return false;
-}
-
-function isHighImpact(node) {
-  if (!node) return false;
-  const totalDegree = (node.imported_by_count || 0) + (node.imports_count || 0);
-  return totalDegree >= 4 || (node.imported_by_count || 0) >= 2 || node.id.endsWith('logger.py') || node.id.endsWith('context_builder.py');
-}
-
-function updateFlyoutFilterCounts() {
-  if (!G || !G.nodes) return;
-
-  const countAll = G.nodes.filter(n => matchesCategory(n, 'all')).length;
-  const countCore = G.nodes.filter(n => matchesCategory(n, 'core')).length;
-  const countComp = G.nodes.filter(n => matchesCategory(n, 'compression')).length;
-  const countApi = G.nodes.filter(n => matchesCategory(n, 'api')).length;
-  const countTests = G.nodes.filter(n => matchesCategory(n, 'tests')).length;
-
-  const elAll = document.getElementById('fly-cnt-all');
-  const elCore = document.getElementById('fly-cnt-core');
-  const elComp = document.getElementById('fly-cnt-comp');
-  const elApi = document.getElementById('fly-cnt-api');
-  const elTests = document.getElementById('fly-cnt-tests');
-
-  if (elAll) elAll.textContent = countAll;
-  if (elCore) elCore.textContent = countCore;
-  if (elComp) elComp.textContent = countComp;
-  if (elApi) elApi.textContent = countApi;
-  if (elTests) elTests.textContent = countTests;
-
-  const countHubs = G.nodes.filter(n => isHighImpact(n)).length;
-  const elHubs = document.getElementById('fly-cnt-hubs');
-  if (elHubs) elHubs.textContent = countHubs;
-
-  const countFrozen = G.nodes.filter(n => n.lock_status === 'frozen' || n.lock_status === 'partially_frozen').length;
-  const elFrozen = document.getElementById('fly-cnt-frozen');
-  const elFrozenBadge = document.getElementById('fly-cnt-frozen-badge');
-  if (elFrozen) elFrozen.textContent = countFrozen;
-  if (elFrozenBadge) elFrozenBadge.textContent = countFrozen;
-}
-
-function applyFilter() {
-  if(!svgRoot || !G) return;
-  const hasFilter = q || !selectedCategories.has('all') || lockFlt !== 'all' || compactMode || impactFilterActive;
-
-  let activeCount = 0;
-
-  svgRoot.selectAll('.node-pill').each(function(d) {
-    const matchQ = !q || d.id.toLowerCase().includes(q)
-      || (d.functions||[]).some(f=>f.toLowerCase().includes(q))
-      || (d.classes||[]).some(c=>c.toLowerCase().includes(q));
-    
-    const matchCat = matchesSelectedCategories(d);
-    
-    let matchL = true;
-    if (lockFlt === 'locked') {
-        matchL = d.lock_status === 'frozen' || d.lock_status === 'partially_frozen' || d.lock_status === 'tampered';
-    } else if (lockFlt === 'unlocked') {
-        matchL = d.lock_status === 'unlocked';
-    }
-    
-    let matchImpact = true;
-    if (impactFilterActive) {
-      matchImpact = isHighImpact(d);
-    }
-    
-    const match = matchQ && matchCat && matchL && matchImpact;
-    if (match) activeCount++;
-
-    // Dim non-matching nodes to 15% opacity so project structure context remains visible
-    d3.select(this).transition().duration(200)
-      .attr('opacity', hasFilter ? (match ? 1 : 0.15) : 1);
-  });
-
-  // Update Active Nodes count and Token Weight display inside Flyout Panel
-  const selCountEl = document.getElementById('fly-sel-count');
-  const tokenWeightEl = document.getElementById('fly-token-weight');
-  if (selCountEl) selCountEl.textContent = activeCount;
-  if (tokenWeightEl) {
-    const estTokens = Math.round(activeCount * 385);
-    tokenWeightEl.textContent = `~${(estTokens / 1000).toFixed(1)}k tokens`;
-  }
-
-  svgRoot.selectAll('.link').transition().duration(200)
-    .attr('opacity', d => {
-      if (compactMode) {
-        const tgt = G.nodes.find(n => n.id === (d.target.id || d.target));
-        return tgt && tgt.imported_by_count >= 2 ? 0.85 : 0.05;
-      }
-      return hasFilter ? 0.08 : 0.7;
-    })
-    .attr('stroke', d => {
-      if (compactMode) {
-        const tgt = G.nodes.find(n => n.id === (d.target.id || d.target));
-        return tgt && tgt.imported_by_count >= 2 ? '#60a5fa' : 'rgba(100,116,175,0.12)';
-      }
-      const tgt = G.nodes.find(n => n.id === (d.target.id || d.target));
-      return tgt ? folderColor(tgt.group) + '60' : 'rgba(100,116,175,0.35)';
-    });
-
-  svgRoot.selectAll('.hull').transition().duration(200)
-    .attr('opacity', (selectedCategories.has('all') && !compactMode) ? 1 : 0.12);
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  PATH FINDING
-// ═══════════════════════════════════════════════════════════════
-function setPathNode(which) {
-  if(!selId) return;
-  const name = selId.split('/').pop();
-  if(which==='start') {
-    pathStart = selId;
-    document.getElementById('lbl-start').textContent = name;
-  } else {
-    pathEnd = selId;
-    document.getElementById('lbl-end').textContent = name;
-  }
-  updatePathNodeRings();
-  document.getElementById('btn-find-path').classList.toggle('ready', !!(pathStart && pathEnd));
-}
-
-function updatePathNodeRings() {
-  svgRoot.selectAll('.glow-ring').attr('opacity',0).attr('stroke', d=>folderColor(d.group));
-  if(pathStart) svgRoot.select('#np-'+safeId(pathStart)+' .glow-ring').attr('opacity',.9).attr('stroke','#4ade80');
-  if(pathEnd)   svgRoot.select('#np-'+safeId(pathEnd)  +' .glow-ring').attr('opacity',.9).attr('stroke','#f87171');
-}
-
-async function findPath() {
-  if(!pathStart||!pathEnd) return;
-  const r = await fetch(`/api/path?from=${encodeURIComponent(pathStart)}&to=${encodeURIComponent(pathEnd)}`);
-  const data = await r.json();
-  if(!data.path||!data.path.length) { alert('No path found between these files.'); return; }
-  pathSet = new Set(data.path);
-  applyPathStyle(data.path);
-  showPathResult(data.path, data.undirected);
-  document.getElementById('btn-clear-path').classList.add('show');
-  animatePath(data.path);
-}
-
-let currentPathArray = [];
-
-function applyPathStyle(path) {
-  if (path) currentPathArray = path;
-  else path = currentPathArray;
-
-  if (!path || !path.length) return;
-  pathSet = new Set(path);
-
-  // Dim non-path node pills to 20% opacity (0.2)
-  svgRoot.selectAll('.node-pill').each(function(d) {
-    const isPathNode = pathSet.has(d.id);
-    d3.select(this).transition().duration(200)
-      .attr('opacity', isPathNode ? 1 : 0.2);
-  });
-
-  svgRoot.selectAll('.node-pill rect:first-child')
-    .attr('fill-opacity', d => pathSet.has(d.id) ? folderColor(d.group) + '35' : folderColor(d.group) + '08')
-    .attr('stroke', d => pathSet.has(d.id) ? '#00f3ff' : (d.lock_status === 'frozen' ? '#71717a' : folderColor(d.group)))
-    .attr('stroke-width', d => pathSet.has(d.id) ? 2.2 : 1.2)
-    .attr('stroke-opacity', d => pathSet.has(d.id) ? 1 : 0.2);
-
-  svgRoot.selectAll('.node-pill text').attr('opacity', d => pathSet.has(d.id) ? 1 : 0.2);
-
-  // Dim standard links to 20% opacity
-  svgRoot.selectAll('.link').transition().duration(200)
-    .attr('stroke-opacity', 0.08)
-    .attr('stroke', 'rgba(100,116,175,0.08)');
-
-  // Update glowing rings around traversed nodes with vibrant cyan accent
-  svgRoot.selectAll('.glow-ring').each(function(d) {
-    if (d && pathSet.has(d.id)) {
-      d3.select(this)
-        .attr('stroke', '#00f3ff')
-        .attr('opacity', 0.95)
-        .attr('filter', 'url(#glow)');
-    } else {
-      const isFrz = d && (d.lock_status === 'frozen' || d.lock_status === 'partially_frozen' || d.lock_status === 'tampered');
-      d3.select(this)
-        .attr('stroke', d ? folderColor(d.group) : '#ffffff')
-        .attr('opacity', isFrz ? 0.6 : 0)
-        .attr('filter', null);
-    }
-  });
-
-  updatePathOverlay();
-  updatePathNodeRings();
-}
-
-function updatePathOverlay() {
-  if (!svgRoot) return;
-  let overlayG = svgRoot.select('.path-overlay-layer');
-  if (overlayG.empty()) {
-    overlayG = svgRoot.append('g').attr('class', 'path-overlay-layer');
-  }
-
-  if (!currentPathArray || currentPathArray.length < 2) {
-    overlayG.selectAll('*').remove();
-    return;
-  }
-
-  const overlayEdges = [];
-  for (let i = 0; i < currentPathArray.length - 1; i++) {
-    const idA = currentPathArray[i];
-    const idB = currentPathArray[i + 1];
-    const nodeA = G.nodes.find(n => n.id === idA);
-    const nodeB = G.nodes.find(n => n.id === idB);
-    if (nodeA && nodeB) {
-      overlayEdges.push({ source: nodeA, target: nodeB, id: `path-edge-${i}` });
-    }
-  }
-
-  // Backing glow lines
-  const backingLines = overlayG.selectAll('line.path-glow-backing')
-    .data(overlayEdges, d => d.id);
-
-  backingLines.exit().remove();
-
-  backingLines.enter()
-    .append('line')
-    .attr('class', 'path-glow-backing')
-    .merge(backingLines)
-    .attr('x1', d => d.source.x)
-    .attr('y1', d => d.source.y)
-    .attr('x2', d => d.target.x)
-    .attr('y2', d => d.target.y);
-
-  // Animated directional dash lines
-  const animLines = overlayG.selectAll('line.path-animated-edge')
-    .data(overlayEdges, d => d.id);
-
-  animLines.exit().remove();
-
-  animLines.enter()
-    .append('line')
-    .attr('class', 'path-animated-edge')
-    .attr('marker-end', 'url(#arr-path)')
-    .merge(animLines)
-    .attr('x1', d => d.source.x)
-    .attr('y1', d => d.source.y)
-    .attr('x2', d => d.target.x)
-    .attr('y2', d => d.target.y);
-}
-
-function updatePathOverlayPositions() {
-  if (!svgRoot || !currentPathArray || currentPathArray.length < 2) return;
-  const overlayG = svgRoot.select('.path-overlay-layer');
-  if (overlayG.empty()) return;
-
-  overlayG.selectAll('line')
-    .attr('x1', d => d.source.x)
-    .attr('y1', d => d.source.y)
-    .attr('x2', d => d.target.x)
-    .attr('y2', d => d.target.y);
-}
-
-function animatePath(path) {
-  path.forEach((id, i) => {
-    setTimeout(() => {
-      svgRoot.select('#np-' + safeId(id) + ' .glow-ring')
-        .attr('stroke', '#00f3ff').attr('opacity', .95)
-        .transition().duration(400).attr('opacity', .4)
-        .transition().duration(400).attr('opacity', .95);
-    }, i * 200);
-  });
-}
-
-function showPathResult(path, undirected) {
-  const el = document.getElementById('path-result');
-  if (!el) return;
-  el.style.display = 'block';
-
-  const container = document.getElementById('path-steps-container');
-  if (!container) return;
-
-  let html = '';
-  path.forEach((p, i) => {
-    const nodeObj = G.nodes.find(n => n.id === p);
-    const fileName = p.split('/').pop();
-    const groupName = nodeObj ? nodeObj.group : '';
-    const color = nodeObj ? folderColor(groupName) : '#00f3ff';
-    const isStart = i === 0;
-    const isEnd = i === path.length - 1;
-
-    const stepClass = isStart ? 'start-step' : (isEnd ? 'end-step' : 'mid-step');
-    const badgeText = isStart ? 'START' : (isEnd ? 'END' : `STEP ${i+1}`);
-
-    html += `
-      <div class="path-step-card ${stepClass}">
-        <div class="path-step-num">${i + 1}</div>
-        <div class="path-step-info">
-          <div class="path-step-title" title="${p}">${fileName}</div>
-          <div class="path-step-meta">
-            <span class="path-step-group" style="background:${color}22; color:${color}; border:1px solid ${color}44;">${groupName || 'file'}</span>
-            <span class="path-step-tag">${badgeText}</span>
-          </div>
-        </div>
-      </div>
-    `;
-
-    if (i < path.length - 1) {
-      html += `
-        <div class="path-connector">
-          <div class="path-line-track"></div>
-          <div class="path-arrow-down">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#00f3ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="4" x2="12" y2="20"></line>
-              <polyline points="19 13 12 20 5 13"></polyline>
-            </svg>
-          </div>
-        </div>
-      `;
-    }
-  });
-
-  container.innerHTML = html;
-
-  const metaEl = document.getElementById('path-meta');
-  if (metaEl) {
-    metaEl.innerHTML = `<span>Path Distance: <b>${path.length - 1} hop${path.length - 1 !== 1 ? 's' : ''} (${path.length} nodes)</b></span>` + 
-                       (undirected ? ` · <span style="color:#fbbf24;">(undirected)</span>` : '');
-  }
-}
-
-function clearPath() {
-  pathStart = null;
-  pathEnd = null;
-  pathSet = new Set();
-  currentPathArray = [];
-
-  if (svgRoot) {
-    svgRoot.select('.path-overlay-layer').selectAll('*').remove();
-    svgRoot.selectAll('.node-pill').attr('opacity', 1);
-  }
-
-  document.getElementById('lbl-start').textContent = '— start';
-  document.getElementById('lbl-end').textContent = 'end —';
-  document.getElementById('btn-find-path').classList.remove('ready');
-  document.getElementById('btn-clear-path').classList.remove('show');
-
-  const el = document.getElementById('path-result');
-  if (el) el.style.display = 'none';
-
-  resetStyle();
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  ZOOM CONTROLS
-// ═══════════════════════════════════════════════════════════════
-function attachControls() {
-  document.getElementById('btn-fit').onclick = fitGraph;
-  document.getElementById('btn-zi').onclick  = () => d3.select('#g').transition().call(zoomB.scaleBy, 1.4);
-  document.getElementById('btn-zo').onclick  = () => d3.select('#g').transition().call(zoomB.scaleBy, 0.7);
-  document.getElementById('btn-rst').onclick = () => d3.select('#g').transition().duration(500).call(zoomB.transform, d3.zoomIdentity);
-}
-
-function fitGraph() {
-  const svg = d3.select('#g'), g = svgRoot.node();
-  if(!g) return;
-  const b = g.getBBox();
-  const W = svg.node().clientWidth, H = svg.node().clientHeight;
-  const sc = Math.min(.92*W/b.width, .92*H/b.height, 2);
-  const tx = W/2 - sc*(b.x + b.width/2);
-  const ty = H/2 - sc*(b.y + b.height/2);
-  svg.transition().duration(650).call(zoomB.transform, d3.zoomIdentity.translate(tx,ty).scale(sc));
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  STATUS / UTILS
-// ═══════════════════════════════════════════════════════════════
-function setStatus(mode) {
-  const s = G?.stats || {};
-  const langs = Object.entries(s.languages||{}).map(([l,c])=>`${c} ${l}`).join(' · ');
-  document.getElementById('status-txt').textContent =
-    `${s.total_files??'—'} files · ${s.total_connections??'—'} connections · ${langs}`;
-  document.getElementById('status-mode').textContent = mode || '';
-}
-
-function safeId(str) {
-  return str.replace(/[^a-zA-Z0-9_-]/g, '_');
-}
-
-window.addEventListener('resize', () => {
-  if(!sim) return;
-  const svg = d3.select('#g');
-  sim.force('center', d3.forceCenter(svg.node().clientWidth/2, svg.node().clientHeight/2))
-     .alpha(.15).restart();
-});
-
-// ═══════════════════════════════════════════════════════════════
-//  LOCK TOGGLE
-// ═══════════════════════════════════════════════════════════════
-async function toggleLock() {
-  if (!selId) return;
-  const node = G.nodes.find(n => n.id === selId);
-  if (!node) return;
-  
-  const isLocked = node.lock_status === 'frozen' || node.lock_status === 'partially_frozen';
-  const url = isLocked ? '/api/ledger/unlock' : '/api/ledger/lock';
-  const body = { file_path: selId };
-  if (!isLocked) {
-      body.reason = "Frozen via Visualizer UI";
-  }
-  
-  try {
-      const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ file_path: selId, reason: body.reason })
-      });
-      if (res.ok) {
-          await refreshGraphState();
-      } else {
-          console.error('Failed to toggle freeze status');
-      }
-  } catch (err) {
-      console.error('Error toggling freeze: ' + err);
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  TAB SWITCHING & SESSION MEMORY VIEW
-// ═══════════════════════════════════════════════════════════════
-let activePanelTab = 'node';
-
-function updatePanelTabsVisibility() {
-  const tabsBar = document.getElementById('panel-tabs');
-  const nodeBtn = document.getElementById('tab-btn-node');
-  if (!tabsBar || !nodeBtn) return;
-
-  if (selId) {
-    tabsBar.style.display = 'flex';
-    nodeBtn.style.display = '';
-  } else {
-    tabsBar.style.display = 'none';
-    nodeBtn.style.display = 'none';
-  }
-}
-
-function switchPanelTab(tab) {
-  activePanelTab = tab;
-  document.getElementById('panel').classList.add('open');
-  
-  const nodeBtn = document.getElementById('tab-btn-node');
-  const sessBtn = document.getElementById('tab-btn-session');
-  const nodeView = document.getElementById('node-view');
-  const sessView = document.getElementById('session-view');
-
-  updatePanelTabsVisibility();
-
-  if (tab === 'session' || !selId) {
-    nodeBtn.classList.remove('active');
-    sessBtn.classList.add('active');
-    nodeView.style.display = 'none';
-    sessView.classList.add('open');
-    fetchSessionData();
-  } else {
-    sessBtn.classList.remove('active');
-    nodeBtn.classList.add('active');
-    sessView.classList.remove('open');
-    nodeView.style.display = 'flex';
+    console.error('Failed to fetch graph data:', err);
   }
 }
 
@@ -2395,493 +859,670 @@ async function fetchSessionData() {
     const res = await fetch('/api/session/active');
     if (!res.ok) return;
     const data = await res.json();
-    renderSessionView(data);
+    renderSessionIntelligence(data);
   } catch (err) {
-    console.error('Error fetching active session:', err);
+    console.error('Failed to fetch session data:', err);
   }
 }
 
-let currentSessionActions = [];
-
-function getActionMetrics(a) {
-  const comp = a.compressed_tokens || a.tokens_used || 0;
-  let saved = a.tokens_saved || 0;
-  let orig = a.original_tokens || 0;
-  if (orig <= 0 && (comp > 0 || saved > 0)) {
-    orig = comp + saved;
-  }
-  if (orig <= 0 && comp > 0) {
-    orig = Math.round(comp / 0.10);
-    saved = orig - comp;
-  }
-  if (saved <= 0 && orig > comp) {
-    saved = orig - comp;
-  }
-  let reduction = a.reduction_percent || 0;
-  if (reduction <= 0 && orig > 0) {
-    reduction = (saved / orig) * 100;
-  }
-  return { comp, saved, orig, reduction };
-}
-
-function renderActionCardHTML(a) {
-  const timeStr = a.timestamp ? (a.timestamp.includes('T') ? a.timestamp.substring(11, 19) : a.timestamp) : '';
-  const desc = a.description || 'Context built for task';
-  const outcomeClass = a.outcome === 'blocked' ? 'badge-active' : 'badge-success';
-  const outcomeText = (a.outcome === 'blocked' ? 'BLOCKED' : 'SUCCESS');
-  const metrics = getActionMetrics(a);
-  const tokensStr = metrics.comp ? ` - ${metrics.comp.toLocaleString()} tokens` : '';
-  
-  return `
-    <div class="recent-card" onclick="openActionDetailsModal('${a.action_id}')">
-      <div class="recent-hdr">
-        <span class="recent-name">Context Build</span>
-        <span class="${outcomeClass}">${outcomeText}</span>
-      </div>
-      <div class="recent-desc">${desc}</div>
-      <div class="recent-meta">${timeStr}${tokensStr}</div>
-    </div>
-  `;
-}
-
-function renderSessionView(data) {
-  const sessId = data.session_id || 'active_session';
+// ═════════════════════════════════════════════════════════════════════════════
+//  SESSION & SIDEBAR RENDERING
+// ═════════════════════════════════════════════════════════════════════════════
+function renderSessionIntelligence(data) {
+  const sessId = data.session_id || 'active';
   const used = data.total_tokens_used || 0;
   const saved = data.total_tokens_saved || 0;
-  const ratio = Math.round((data.compression_ratio || 0) * 100);
+  
+  // Calculate percentage reduction
+  let pct = 0;
+  if (saved + used > 0) {
+    pct = Math.round((saved / (saved + used)) * 100);
+  } else if (data.reduction_percent) {
+    pct = Math.round(data.reduction_percent);
+  }
 
-  document.getElementById('sess-id-val').textContent = sessId;
-  document.getElementById('sess-pct-val').textContent = `${ratio}%`;
-  document.getElementById('sess-used-val').textContent = used.toLocaleString();
-  document.getElementById('sess-saved-val').textContent = saved.toLocaleString();
+  // Update Header Badges
+  document.getElementById('tab-badge-saved').textContent = saved > 1000 ? `${(saved/1000).toFixed(1)}k` : saved;
+  document.getElementById('sess-short-id').textContent = `ID: ${sessId.slice(0, 8)}...`;
+  document.getElementById('hero-tokens-saved').innerHTML = `${saved.toLocaleString()} <span id="hero-reduction-pct">${pct}%</span>`;
+  document.getElementById('metric-saved-num').textContent = saved.toLocaleString();
+  document.getElementById('metric-used-num').textContent = used.toLocaleString();
 
-  const actions = data.session?.actions || [];
-  currentSessionActions = actions;
-  const recentList = document.getElementById('recent-actions-list');
-  document.getElementById('recent-count-badge').textContent = actions.length;
+  // Render Live Actions Feed
+  const actions = data.session?.actions || data.recent_actions || [];
+  const actionListEl = document.getElementById('action-feed-list');
+  document.getElementById('action-count-txt').textContent = actions.length;
 
   if (actions.length === 0) {
-    recentList.innerHTML = `<div style="font-size:0.75rem; color:var(--text-dim); font-style:italic;">No session actions recorded yet.</div>`;
+    actionListEl.innerHTML = `<div style="font-size:0.75rem; color:var(--text-dim); font-style:italic; padding:12px 0;">No AI agent actions recorded yet.</div>`;
   } else {
-    const sortedNewestFirst = actions.slice().reverse();
-    const top5Recent = sortedNewestFirst.slice(0, 5);
-    recentList.innerHTML = top5Recent.map(a => renderActionCardHTML(a)).join('');
+    actionListEl.innerHTML = actions.slice().reverse().map(a => {
+      const typeClass = `type-${a.action_type || 'query'}`;
+      const savedBadge = a.tokens_saved > 0 ? `<span class="saved-pill">+${a.tokens_saved.toLocaleString()} saved</span>` : '';
+      const timeStr = a.timestamp ? new Date(a.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Just now';
+      return `
+        <div class="action-card">
+          <div class="action-top">
+            <span class="action-type ${typeClass}">${a.action_type || 'TASK'}</span>
+            <span class="action-time">${timeStr}</span>
+          </div>
+          <div class="action-desc">${escapeHtml(a.description || a.file_path || 'Code Action')}</div>
+          ${a.file_path ? `<div class="action-meta"><span>${escapeHtml(a.file_path)}</span>${savedBadge}</div>` : ''}
+        </div>
+      `;
+    }).join('');
   }
 
-  drawSavingsChart(actions, saved);
-}
-
-function openAllActionsModal() {
-  const modal = document.getElementById('all-actions-modal');
-  const container = document.getElementById('all-actions-list');
-  if (!modal || !container) return;
-
-  if (!currentSessionActions || currentSessionActions.length === 0) {
-    container.innerHTML = `<div style="font-size:0.75rem; color:var(--text-dim); font-style:italic;">No session actions recorded yet.</div>`;
+  // Render Changed Files Tab
+  const changedFiles = data.changed_files || [];
+  document.getElementById('stat-changed').textContent = changedFiles.length;
+  document.getElementById('tab-badge-changed').textContent = changedFiles.length;
+  document.getElementById('changed-header-badge').textContent = `${changedFiles.length} files`;
+  
+  const changedListEl = document.getElementById('changed-files-container');
+  if (changedFiles.length === 0) {
+    changedListEl.innerHTML = `<div style="font-size:0.75rem; color:var(--text-dim); font-style:italic; padding:12px 0;">No files modified in current session.</div>`;
   } else {
-    const sortedNewestFirst = currentSessionActions.slice().reverse();
-    container.innerHTML = sortedNewestFirst.map(a => renderActionCardHTML(a)).join('');
+    changedListEl.innerHTML = changedFiles.map(f => `
+      <div class="file-item-card" onclick="focusFileNode('${escapeHtml(f)}')">
+        <div class="file-item-info">
+          <span class="file-item-name">${escapeHtml(f.split('/').pop())}</span>
+          <span class="file-item-path">${escapeHtml(f)}</span>
+        </div>
+        <span class="badge-changed">⚡ MODIFIED</span>
+      </div>
+    `).join('');
   }
 
-  modal.classList.add('open');
+  // Render Frozen Files Tab
+  const lockedFiles = data.locked_files || [];
+  const lockedCount = data.total_locked || lockedFiles.length;
+  document.getElementById('stat-frozen').textContent = lockedCount;
+  document.getElementById('tab-badge-frozen').textContent = lockedCount;
+  document.getElementById('frozen-header-badge').textContent = `${lockedCount} locked`;
+
+  const frozenListEl = document.getElementById('frozen-files-container');
+  if (lockedFiles.length === 0) {
+    frozenListEl.innerHTML = `<div style="font-size:0.75rem; color:var(--text-dim); font-style:italic; padding:12px 0;">No files currently frozen. Click any node in the graph to freeze it!</div>`;
+  } else {
+    frozenListEl.innerHTML = lockedFiles.map(f => {
+      const path = typeof f === 'string' ? f : f.file_path;
+      const reason = typeof f === 'object' && f.reason ? f.reason : 'Protected Ledger feature';
+      return `
+        <div class="ledger-card">
+          <div class="ledger-top">
+            <span style="font-weight:600; font-size:0.85rem;">${escapeHtml(path.split('/').pop())}</span>
+            <span class="badge-frozen">❄️ FROZEN</span>
+          </div>
+          <span style="font-size:0.7rem; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">${escapeHtml(path)}</span>
+          <div style="font-size:0.75rem; color:var(--text-muted);">${escapeHtml(reason)}</div>
+          <div style="display:flex; justify-content:flex-end; margin-top:4px;">
+            <button class="btn-freeze-toggle" onclick="unfreezeFile('${escapeHtml(path)}')">🔓 Unfreeze</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
 }
 
-function closeAllActionsModal() {
-  const modal = document.getElementById('all-actions-modal');
-  if (modal) modal.classList.remove('open');
+function updateHeaderStats() {
+  const nodes = graphData.nodes || [];
+  const links = graphData.links || [];
+  document.getElementById('stat-files').textContent = nodes.length;
+  document.getElementById('stat-links').textContent = links.length;
 }
 
-function openActionDetailsModal(actionId) {
-  const modal = document.getElementById('action-details-modal');
-  const content = document.getElementById('action-details-content');
-  if (!modal || !content) return;
+// ═════════════════════════════════════════════════════════════════════════════
+//  GRAPH VISUALIZATION & D3 ENGINE
+// ═════════════════════════════════════════════════════════════════════════════
+function setLayoutMode(mode) {
+  currentLayoutMode = mode;
+  document.querySelectorAll('.view-toggles .hdr-btn').forEach(b => b.classList.remove('active'));
+  if (mode === 'cluster') document.getElementById('btn-mode-cluster').classList.add('active');
+  if (mode === 'connected') document.getElementById('btn-mode-connected').classList.add('active');
+  if (mode === 'force') document.getElementById('btn-mode-force').classList.add('active');
+  renderGraph();
+}
 
-  const action = currentSessionActions.find(a => a.action_id === actionId) || 
-                 currentSessionActions.find(a => String(a.action_id) === String(actionId));
+function renderGraph() {
+  if (!gRoot || !graphData.nodes.length) return;
 
-  if (!action) {
-    content.innerHTML = `<div style="font-size:0.8rem; color:var(--text-dim);">Activity details not found.</div>`;
-    modal.classList.add('open');
-    return;
+  const container = document.getElementById('canvas-container');
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+
+  // Filter nodes according to Layout Mode
+  let displayNodes = graphData.nodes.slice();
+  let displayLinks = graphData.links.slice();
+
+  if (currentLayoutMode === 'connected') {
+    displayNodes = displayNodes.filter(n => !n.is_isolated);
+    const validIds = new Set(displayNodes.map(n => n.id));
+    displayLinks = displayLinks.filter(l => validIds.has(l.source.id || l.source) && validIds.has(l.target.id || l.target));
   }
 
-  let taskTitle = action.description || 'Context built for task';
-  if (taskTitle.startsWith('Context built for task: ')) {
-    taskTitle = taskTitle.substring('Context built for task: '.length);
-  } else if (taskTitle.startsWith('Started session for task: ')) {
-    taskTitle = taskTitle.substring('Started session for task: '.length);
+  // Clear previous SVG contents
+  gRoot.selectAll('*').remove();
+
+  // Create Links Layer
+  const linkGroup = gRoot.append('g').attr('class', 'links-layer');
+  const linkElements = linkGroup.selectAll('path')
+    .data(displayLinks)
+    .join('path')
+    .attr('class', 'edge-link')
+    .attr('marker-end', 'url(#arrow)')
+    .attr('stroke-dasharray', currentLayoutMode === 'connected' ? 'none' : '3,3');
+
+  // Compute Folder Clusters
+  const folderGroups = Array.from(new Set(displayNodes.map(n => n.group || 'root')));
+  const clusterCenters = {};
+  const numFolders = folderGroups.length;
+  const radius = Math.min(width, height) * 0.38;
+
+  folderGroups.forEach((folder, idx) => {
+    const angle = (idx / numFolders) * 2 * Math.PI - Math.PI / 2;
+    clusterCenters[folder] = {
+      x: width / 2 + radius * Math.cos(angle),
+      y: height / 2 + radius * Math.sin(angle)
+    };
+  });
+
+  // Render Folder Cluster Background Headings (Only in cluster mode)
+  if (currentLayoutMode === 'cluster') {
+    const clusterLabelGroup = gRoot.append('g').attr('class', 'cluster-labels-layer');
+    clusterLabelGroup.selectAll('text')
+      .data(folderGroups)
+      .join('text')
+      .attr('class', 'cluster-label')
+      .attr('x', f => clusterCenters[f].x)
+      .attr('y', f => clusterCenters[f].y - 90)
+      .text(f => `📁 ${f} (${displayNodes.filter(n => (n.group || 'root') === f).length})`);
   }
 
-  const metrics = getActionMetrics(action);
-  const origTokens = metrics.orig;
-  const compTokens = metrics.comp;
-  const tokensSaved = metrics.saved;
-  const redPct = Math.round(metrics.reduction);
+  // Create Nodes Layer
+  const nodeGroup = gRoot.append('g').attr('class', 'nodes-layer');
+  const nodeElements = nodeGroup.selectAll('g')
+    .data(displayNodes)
+    .join('g')
+    .attr('class', 'node-group')
+    .call(d3.drag()
+      .on('start', dragStarted)
+      .on('drag', dragged)
+      .on('end', dragEnded)
+    )
+    .on('click', (e, d) => selectFileNode(d))
+    .on('mouseenter', (e, d) => showTooltip(e, d))
+    .on('mouseleave', () => hideTooltip());
 
-  const outcomeClass = action.outcome === 'blocked' ? 'badge-active' : 'badge-success';
-  const outcomeText = (action.outcome === 'blocked' ? 'BLOCKED' : 'SUCCESS');
-  const timestampStr = action.timestamp ? (action.timestamp.includes('T') ? action.timestamp.replace('T', ' ').substring(0, 19) : action.timestamp) : 'N/A';
+  // Render Node Pills
+  nodeElements.each(function(d) {
+    const el = d3.select(this);
+    const label = d.label || d.id.split('/').pop();
+    const pillW = Math.max(label.length * 7.5 + 44, 90);
+    const pillH = 30;
+    const folderColor = getFolderColor(d.group);
 
-  content.innerHTML = `
-    <div style="display:flex; flex-direction:column; gap:14px;">
-      <div style="background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:14px;">
-        <div style="font-size:0.7rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px; font-weight:600; margin-bottom:4px;">Task</div>
-        <div style="font-size:0.95rem; font-weight:600; color:var(--text); line-height:1.4;">${taskTitle}</div>
-      </div>
+    // Pill Rectangle
+    const rect = el.append('rect')
+      .attr('class', 'node-pill')
+      .attr('x', -pillW / 2)
+      .attr('y', -pillH / 2)
+      .attr('width', pillW)
+      .attr('height', pillH)
+      .attr('fill', '#13182b')
+      .attr('stroke', folderColor);
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-        <div style="background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:12px;">
-          <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px;">Original Input Tokens</div>
-          <div style="font-size:1.1rem; font-weight:700; color:var(--text);">${origTokens.toLocaleString()}</div>
-        </div>
-        <div style="background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:12px;">
-          <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px;">Compressed Input Tokens</div>
-          <div style="font-size:1.1rem; font-weight:700; color:#60a5fa;">${compTokens.toLocaleString()}</div>
-        </div>
-        <div style="background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:12px;">
-          <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px;">Input Tokens Saved</div>
-          <div style="font-size:1.1rem; font-weight:700; color:#4ade80;">${tokensSaved.toLocaleString()}</div>
-        </div>
-        <div style="background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:12px;">
-          <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px;">Compression</div>
-          <div style="font-size:1.1rem; font-weight:700; color:#34d399;">${redPct}% reduction</div>
-        </div>
-      </div>
+    // Apply Badges
+    if (d.is_changed) rect.classed('is-changed', true);
+    if (d.lock_status === 'frozen') rect.classed('is-frozen', true);
+    if (d.imported_by_count >= 2) rect.classed('is-hub', true);
 
-      <div style="background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:12px; font-size:0.75rem; color:var(--text-muted); display:flex; flex-direction:column; gap:6px;">
-        <div style="display:flex; justify-content:space-between;">
-          <span>Timestamp:</span>
-          <span style="color:var(--text); font-family:'JetBrains Mono', monospace;">${timestampStr}</span>
-        </div>
-        <div style="display:flex; justify-content:space-between;">
-          <span>Action Type:</span>
-          <span style="color:var(--text); text-transform:uppercase;">${action.action_type || 'query'}</span>
-        </div>
-        <div style="display:flex; justify-content:space-between;">
-          <span>Outcome:</span>
-          <span class="${outcomeClass}">${outcomeText}</span>
-        </div>
-        ${action.file_path ? `<div style="display:flex; justify-content:space-between;"><span>File Path:</span><span style="color:var(--text); font-family:'JetBrains Mono', monospace;">${action.file_path}</span></div>` : ''}
-        ${action.action_id ? `<div style="display:flex; justify-content:space-between;"><span>Action ID:</span><span style="color:var(--text-dim); font-family:'JetBrains Mono', monospace; font-size:0.7rem;">${action.action_id}</span></div>` : ''}
-      </div>
-    </div>
-  `;
+    // Folder Color Dot Indicator
+    el.append('circle')
+      .attr('cx', -pillW / 2 + 12)
+      .attr('cy', 0)
+      .attr('r', 4.5)
+      .attr('fill', d.is_changed ? '#10b981' : (d.lock_status === 'frozen' ? '#06b6d4' : folderColor));
 
-  modal.classList.add('open');
-}
+    // File Label Text
+    el.append('text')
+      .attr('class', 'node-text')
+      .attr('x', -pillW / 2 + 24)
+      .attr('y', 0)
+      .attr('text-anchor', 'start')
+      .text(label);
 
-function closeActionDetailsModal() {
-  const modal = document.getElementById('action-details-modal');
-  if (modal) modal.classList.remove('open');
-}
+    // Right Badge (Changed ⚡ or Frozen ❄️ or Hub 👑)
+    if (d.is_changed) {
+      el.append('text')
+        .attr('class', 'node-badge-txt')
+        .attr('x', pillW / 2 - 12)
+        .attr('y', 0)
+        .attr('text-anchor', 'middle')
+        .attr('fill', '#10b981')
+        .text('⚡');
+    } else if (d.lock_status === 'frozen') {
+      el.append('text')
+        .attr('class', 'node-badge-txt')
+        .attr('x', pillW / 2 - 12)
+        .attr('y', 0)
+        .attr('text-anchor', 'middle')
+        .attr('fill', '#06b6d4')
+        .text('❄️');
+    } else if (d.imported_by_count >= 2) {
+      el.append('text')
+        .attr('class', 'node-badge-txt')
+        .attr('x', pillW / 2 - 12)
+        .attr('y', 0)
+        .attr('text-anchor', 'middle')
+        .attr('fill', '#fbbf24')
+        .text('👑');
+    }
+  });
 
-function drawSavingsChart(actions, currentTotalSaved) {
-  const canvas = document.getElementById('savings-chart');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const w = canvas.width = canvas.parentElement.clientWidth || 260;
-  const h = canvas.height = canvas.parentElement.clientHeight || 115;
+  // Setup D3 Simulation
+  if (simulation) simulation.stop();
 
-  ctx.clearRect(0, 0, w, h);
+  simulation = d3.forceSimulation(displayNodes)
+    .alphaDecay(0.025)
+    .velocityDecay(0.35);
 
-  let points = [15000, 16500, 18400, Math.max(20000, currentTotalSaved)];
-  if (actions && actions.length > 0) {
-    let cum = 15000;
-    points = [cum];
-    actions.forEach(a => {
-      cum += (a.tokens_saved || 400);
-      points.push(cum);
+  if (currentLayoutMode === 'cluster') {
+    // Cluster force pulls nodes toward their folder center
+    simulation
+      .force('link', d3.forceLink(displayLinks).id(d => d.id).distance(90).strength(0.4))
+      .force('charge', d3.forceManyBody().strength(-180))
+      .force('clusterX', d3.forceX(d => clusterCenters[d.group || 'root']?.x || width / 2).strength(0.45))
+      .force('clusterY', d3.forceY(d => clusterCenters[d.group || 'root']?.y || height / 2).strength(0.45))
+      .force('collide', d3.forceCollide().radius(d => (d.label.length * 4 + 28)).iterations(2));
+  } else if (currentLayoutMode === 'connected') {
+    // Large, spacious architecture layout for connected components
+    simulation
+      .force('link', d3.forceLink(displayLinks).id(d => d.id).distance(140).strength(0.6))
+      .force('charge', d3.forceManyBody().strength(-450))
+      .force('center', d3.forceCenter(width / 2, height / 2))
+      .force('collide', d3.forceCollide().radius(d => (d.label.length * 4 + 32)).iterations(3));
+  } else {
+    // General force layout
+    simulation
+      .force('link', d3.forceLink(displayLinks).id(d => d.id).distance(100).strength(0.3))
+      .force('charge', d3.forceManyBody().strength(-220))
+      .force('center', d3.forceCenter(width / 2, height / 2))
+      .force('collide', d3.forceCollide().radius(d => (d.label.length * 4 + 26)).iterations(2));
+  }
+
+  simulation.on('tick', () => {
+    linkElements.attr('d', d => {
+      const sx = d.source.x, sy = d.source.y;
+      const tx = d.target.x, ty = d.target.y;
+      const dx = tx - sx, dy = ty - sy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist === 0) return `M${sx},${sy}L${tx},${ty}`;
+      const offset = 26;
+      const targetX = tx - (dx / dist) * offset;
+      const targetY = ty - (dy / dist) * offset;
+      const dr = dist * 1.35;
+      return `M${sx},${sy}A${dr},${dr} 0 0,1 ${targetX},${targetY}`;
     });
-    if (points.length > 8) points = points.slice(-8);
+
+    nodeElements.attr('transform', d => `translate(${d.x},${d.y})`);
+  });
+
+  if (activePathNodes) {
+    applyPathHighlighting();
   }
 
-  const maxVal = Math.max(...points, 25000);
-  const minVal = 0;
-
-  const padL = 30, padR = 10, padT = 15, padB = 20;
-  const graphW = w - padL - padR;
-  const graphH = h - padT - padB;
-
-  ctx.strokeStyle = '#252840';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(padL, padT);
-  ctx.lineTo(w - padR, padT);
-  ctx.moveTo(padL, padT + graphH / 2);
-  ctx.lineTo(w - padR, padT + graphH / 2);
-  ctx.moveTo(padL, h - padB);
-  ctx.lineTo(w - padR, h - padB);
-  ctx.stroke();
-
-  ctx.fillStyle = '#4a5075';
-  ctx.font = '9px JetBrains Mono, monospace';
-  ctx.textAlign = 'right';
-  ctx.fillText(Math.round(maxVal / 1000) + 'k', padL - 4, padT + 3);
-  ctx.fillText(Math.round((maxVal / 2) / 1000) + 'k', padL - 4, padT + graphH / 2 + 3);
-  ctx.fillText('0', padL - 4, h - padB + 3);
-
-  const coords = points.map((val, idx) => {
-    const x = padL + (idx / (points.length - 1 || 1)) * graphW;
-    const y = h - padB - ((val - minVal) / (maxVal - minVal)) * graphH;
-    return { x, y };
-  });
-
-  const grad = ctx.createLinearGradient(0, padT, 0, h - padB);
-  grad.addColorStop(0, 'rgba(52, 211, 153, 0.35)');
-  grad.addColorStop(1, 'rgba(52, 211, 153, 0.02)');
-
-  ctx.fillStyle = grad;
-  ctx.beginPath();
-  ctx.moveTo(coords[0].x, h - padB);
-  coords.forEach(pt => ctx.lineTo(pt.x, pt.y));
-  ctx.lineTo(coords[coords.length - 1].x, h - padB);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.strokeStyle = '#34d399';
-  ctx.lineWidth = 2.5;
-  ctx.beginPath();
-  coords.forEach((pt, i) => {
-    if (i === 0) ctx.moveTo(pt.x, pt.y);
-    else ctx.lineTo(pt.x, pt.y);
-  });
-  ctx.stroke();
-
-  coords.forEach(pt => {
-    ctx.fillStyle = '#34d399';
-    ctx.beginPath();
-    ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#0d0f18';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-  });
+  // Fit view nicely
+  setTimeout(resetZoom, 200);
 }
 
-function openBuildContextModal() {
-  document.getElementById('build-context-modal').classList.add('open');
-  document.getElementById('task-input-text').focus();
-  document.getElementById('task-result-box').style.display = 'none';
+// ═════════════════════════════════════════════════════════════════════════════
+//  D3 DRAG HANDLERS
+// ═════════════════════════════════════════════════════════════════════════════
+function dragStarted(event, d) {
+  if (!event.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x;
+  d.fy = d.y;
+}
+function dragged(event, d) {
+  d.fx = event.x;
+  d.fy = event.y;
+}
+function dragEnded(event, d) {
+  if (!event.active) simulation.alphaTarget(0);
+  d.fx = null;
+  d.fy = null;
 }
 
-function closeBuildContextModal() {
-  document.getElementById('build-context-modal').classList.remove('open');
+// ═════════════════════════════════════════════════════════════════════════════
+//  NODE SELECTION & INSPECTOR
+// ═════════════════════════════════════════════════════════════════════════════
+async function selectFileNode(d) {
+  selectedNode = d;
+
+  // Highlight links in graph unless a path query is actively displayed
+  if (!activePathNodes) {
+    d3.selectAll('.edge-link')
+      .classed('highlighted', l => (l.source.id === d.id || l.target.id === d.id))
+      .attr('marker-end', l => (l.source.id === d.id || l.target.id === d.id) ? 'url(#arrow-highlighted)' : 'url(#arrow)');
+  }
+
+  // Switch to Inspector Tab
+  switchTab('inspector');
+
+  document.getElementById('inspector-placeholder').style.display = 'none';
+  const body = document.getElementById('inspector-body');
+  body.style.display = 'flex';
+
+  document.getElementById('insp-name').textContent = d.label;
+  document.getElementById('insp-path').textContent = d.id;
+  document.getElementById('insp-lang').textContent = d.language;
+  document.getElementById('insp-connections').textContent = `${d.imported_by_count} imported by | ${d.imports_count || 0} imports`;
+
+  // Lock status
+  const lockBadge = document.getElementById('insp-lock-badge');
+  const lockBtn = document.getElementById('btn-toggle-lock');
+  if (d.lock_status === 'frozen') {
+    lockBadge.style.display = 'inline-flex';
+    lockBtn.textContent = '🔓 Unfreeze File';
+    lockBtn.className = 'btn-freeze-toggle';
+  } else {
+    lockBadge.style.display = 'none';
+    lockBtn.textContent = '❄️ Freeze File';
+    lockBtn.className = 'btn-freeze-action';
+  }
+
+  // Functions
+  const fnsCont = document.getElementById('insp-functions-container');
+  fnsCont.innerHTML = (d.functions || []).map(f => `<span class="meta-chip fn">${escapeHtml(f)}()</span>`).join('') || '<span style="color:var(--text-dim); font-size:0.75rem;">None</span>';
+
+  // Imports
+  const impsCont = document.getElementById('insp-imports-container');
+  impsCont.innerHTML = (d.imports || []).map(i => `<span class="meta-chip">${escapeHtml(i)}</span>`).join('') || '<span style="color:var(--text-dim); font-size:0.75rem;">None</span>';
+
+  // Fetch full code preview
+  try {
+    const res = await fetch(`/api/file?path=${encodeURIComponent(d.id)}`);
+    if (res.ok) {
+      const fileData = await res.json();
+      document.getElementById('insp-code-preview').textContent = fileData.source_preview?.join('\n') || '// No source preview available';
+    }
+  } catch (err) {
+    document.getElementById('insp-code-preview').textContent = '// Failed to load code preview';
+  }
 }
 
-async function submitBuildContextTask() {
-  const input = document.getElementById('task-input-text');
-  const taskText = input.value.trim();
-  if (!taskText) {
-    alert('Please enter a task description.');
+function focusFileNode(filePath) {
+  const node = graphData.nodes.find(n => n.id === filePath || n.id.endsWith(filePath));
+  if (node) {
+    selectFileNode(node);
+    // Center view on this node
+    svg.transition().duration(400).call(
+      zoomBehavior.transform,
+      d3.zoomIdentity.translate(svg.attr('width') / 2, svg.attr('height') / 2).scale(1.3).translate(-node.x, -node.y)
+    );
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  PATH FINDING & DEPENDENCY TRACING
+// ═════════════════════════════════════════════════════════════════════════════
+let activePathNodes = null;
+let activePathEdges = null;
+
+function populateFilesDatalist() {
+  const datalist = document.getElementById('files-datalist');
+  if (!datalist || !graphData.nodes) return;
+  datalist.innerHTML = graphData.nodes.map(n => `<option value="${escapeHtml(n.id)}">${escapeHtml(n.label)} (${escapeHtml(n.group)})</option>`).join('');
+}
+
+function setAsPathStart() {
+  if (selectedNode) {
+    document.getElementById('path-start-input').value = selectedNode.id;
+  }
+}
+
+function setAsPathEnd() {
+  if (selectedNode) {
+    document.getElementById('path-end-input').value = selectedNode.id;
+  }
+}
+
+async function executeFindPath() {
+  const startInput = document.getElementById('path-start-input');
+  const endInput = document.getElementById('path-end-input');
+  const start = startInput.value.trim();
+  const end = endInput.value.trim();
+
+  const banner = document.getElementById('path-result-banner');
+  const bannerText = document.getElementById('path-banner-text');
+
+  if (!start || !end) {
+    banner.className = 'path-banner error';
+    bannerText.textContent = 'Please enter or select both a Start and End file.';
+    banner.style.display = 'flex';
     return;
   }
-
-  const btn = document.getElementById('btn-run-build-task');
-  btn.textContent = 'Compressing...';
-  btn.disabled = true;
 
   try {
-    const res = await fetch('/api/session/build_context', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ task: taskText })
-    });
-
-    if (!res.ok) throw new Error(await res.text());
+    const res = await fetch(`/api/path?from=${encodeURIComponent(start)}&to=${encodeURIComponent(end)}`);
     const data = await res.json();
 
-    const stats = data.context?.token_stats || {};
-    const box = document.getElementById('task-result-box');
-    const summary = document.getElementById('task-stats-summary');
-
-    summary.innerHTML = `
-      <div><b>Task:</b> ${taskText}</div>
-      <div><b>Original Input Tokens:</b> ${stats.original_input_tokens?.toLocaleString() || 0}</div>
-      <div><b>Compressed Input Tokens:</b> <span style="color:#38bdf8; font-weight:700;">${stats.compressed_input_tokens?.toLocaleString() || 0}</span></div>
-      <div><b>Input Tokens Saved:</b> <span style="color:#34d399; font-weight:700;">${stats.input_tokens_saved?.toLocaleString() || 0} (${Math.round(stats.input_reduction_percent || 0)}% reduction)</span></div>
-      <div><b>Max Output Limit:</b> ${stats.max_output_tokens?.toLocaleString() || 1024} tokens</div>
-    `;
-    box.style.display = 'block';
-
-    if (data.session_summary) {
-      renderSessionView(data.session_summary);
-    } else {
-      fetchSessionData();
+    if (data.error || !data.path || data.path.length === 0) {
+      banner.className = 'path-banner error';
+      bannerText.textContent = data.error || `No dependency path found between "${start.split('/').pop()}" and "${end.split('/').pop()}".`;
+      banner.style.display = 'flex';
+      clearGraphPathHighlights();
+      return;
     }
+
+    // Success: activate path highlights
+    activePathNodes = new Set(data.path);
+    activePathEdges = new Set();
+    for (let i = 0; i < data.path.length - 1; i++) {
+      activePathEdges.add(`${data.path[i]}->${data.path[i+1]}`);
+      activePathEdges.add(`${data.path[i+1]}->${data.path[i]}`);
+    }
+
+    const typeDesc = data.directed ? 'Direct Import Flow' : (data.reverse_directed ? 'Reverse Import Flow' : 'Undirected Relationship');
+    const chainStr = data.path.map(p => p.split('/').pop()).join(' ➔ ');
+    banner.className = 'path-banner';
+    bannerText.innerHTML = `<b>${data.length} files (${typeDesc}):</b> ${chainStr}`;
+    banner.style.display = 'flex';
+
+    applyPathHighlighting();
+    zoomToPathNodes(data.path);
   } catch (err) {
-    alert('Error building context: ' + err.message);
-  } finally {
-    btn.textContent = '⚡ Compress Context';
-    btn.disabled = false;
+    console.error('Find path error:', err);
+    banner.className = 'path-banner error';
+    bannerText.textContent = 'Failed to find path: ' + err.message;
+    banner.style.display = 'flex';
   }
 }
 
-let compactMode = false;
-function toggleCompactMode() {
-  compactMode = !compactMode;
-  document.body.classList.toggle('compact-mode', compactMode);
-  const btn = document.getElementById('btn-compact-mode');
-  if (btn) btn.classList.toggle('active', compactMode);
-
-  // Workspace Auto-Focus: Automatically close open floating drawers
-  if (compactMode) {
-    const fFilters = document.getElementById('flyout-filters');
-    const fPeek = document.getElementById('flyout-peek');
-    const btnFilters = document.getElementById('act-btn-filters');
-    const btnPeek = document.getElementById('act-btn-peek');
-    if (fFilters) fFilters.style.display = 'none';
-    if (fPeek) fPeek.style.display = 'none';
-    if (btnFilters) btnFilters.classList.remove('active');
-    if (btnPeek) btnPeek.classList.remove('active');
-  }
-
-  applyFilter();
+function clearActivePath() {
+  document.getElementById('path-result-banner').style.display = 'none';
+  document.getElementById('path-start-input').value = '';
+  document.getElementById('path-end-input').value = '';
+  clearGraphPathHighlights();
 }
 
-function toggleFlyout(name) {
-  const fFilters = document.getElementById('flyout-filters');
-  const fPeek = document.getElementById('flyout-peek');
-  const btnFilters = document.getElementById('act-btn-filters');
-  const btnPeek = document.getElementById('act-btn-peek');
-
-  if (name === 'filters') {
-    const isVisible = fFilters.style.display !== 'none';
-    fFilters.style.display = isVisible ? 'none' : 'flex';
-    btnFilters.classList.toggle('active', !isVisible);
-  } else if (name === 'peek') {
-    const isVisible = fPeek.style.display !== 'none';
-    fPeek.style.display = isVisible ? 'none' : 'flex';
-    btnPeek.classList.toggle('active', !isVisible);
-  }
+function clearGraphPathHighlights() {
+  activePathNodes = null;
+  activePathEdges = null;
+  d3.selectAll('.node-group').classed('is-path-node', false).classed('is-dimmed', false);
+  d3.selectAll('.edge-link')
+    .classed('is-path-edge', false)
+    .classed('is-dimmed', false)
+    .classed('highlighted', false)
+    .attr('marker-end', 'url(#arrow)');
 }
 
-function selectFlyoutCategory(cat, el) {
-  if (cat === 'all') {
-    selectedCategories = new Set(['all']);
-    document.querySelectorAll('.fly-cat-item').forEach(item => item.classList.remove('active'));
-    if (el) el.classList.add('active');
+function applyPathHighlighting() {
+  if (!activePathNodes) return;
+  d3.selectAll('.node-group')
+    .classed('is-path-node', d => activePathNodes.has(d.id))
+    .classed('is-dimmed', d => !activePathNodes.has(d.id));
+
+  d3.selectAll('.edge-link')
+    .classed('is-path-edge', function(l) {
+      const s = l.source.id || l.source;
+      const t = l.target.id || l.target;
+      return activePathEdges && (activePathEdges.has(`${s}->${t}`) || activePathEdges.has(`${t}->${s}`));
+    })
+    .classed('is-dimmed', function(l) {
+      const s = l.source.id || l.source;
+      const t = l.target.id || l.target;
+      const isPath = activePathEdges && (activePathEdges.has(`${s}->${t}`) || activePathEdges.has(`${t}->${s}`));
+      return !isPath;
+    })
+    .attr('marker-end', function(l) {
+      const s = l.source.id || l.source;
+      const t = l.target.id || l.target;
+      return (activePathEdges && (activePathEdges.has(`${s}->${t}`) || activePathEdges.has(`${t}->${s}`))) ? 'url(#arrow-path)' : 'url(#arrow)';
+    });
+}
+
+function zoomToPathNodes(pathIds) {
+  if (!simulation || !pathIds.length) return;
+  const nodes = simulation.nodes().filter(n => pathIds.includes(n.id));
+  if (!nodes.length) return;
+
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  nodes.forEach(n => {
+    minX = Math.min(minX, n.x);
+    maxX = Math.max(maxX, n.x);
+    minY = Math.min(minY, n.y);
+    maxY = Math.max(maxY, n.y);
+  });
+
+  const container = document.getElementById('canvas-container');
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+  const dx = maxX - minX || 200;
+  const dy = maxY - minY || 200;
+  const midX = (minX + maxX) / 2;
+  const midY = (minY + maxY) / 2;
+  const scale = Math.max(0.4, Math.min(1.8, 0.75 / Math.max(dx / w, dy / h)));
+
+  svg.transition().duration(600).call(
+    zoomBehavior.transform,
+    d3.zoomIdentity.translate(w / 2, h / 2).scale(scale).translate(-midX, -midY)
+  );
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  FREEZE / UNFREEZE ACTIONS
+// ═════════════════════════════════════════════════════════════════════════════
+async function toggleSelectedFileLock() {
+  if (!selectedNode) return;
+  const isLocked = selectedNode.lock_status === 'frozen';
+  if (isLocked) {
+    await unfreezeFile(selectedNode.id);
   } else {
-    selectedCategories.delete('all');
-    const allEl = document.querySelector('.fly-cat-item[data-cat="all"]');
-    if (allEl) allEl.classList.remove('active');
-
-    if (selectedCategories.has(cat)) {
-      selectedCategories.delete(cat);
-      if (el) el.classList.remove('active');
-      if (selectedCategories.size === 0) {
-        selectedCategories.add('all');
-        if (allEl) allEl.classList.add('active');
-      }
-    } else {
-      selectedCategories.add(cat);
-      if (el) el.classList.add('active');
-    }
+    await freezeFile(selectedNode.id);
   }
-  applyFilter();
 }
 
-function highlightFrozenOnCanvas() {
-  if (!G || !svgRoot) return;
-  const frozenNodes = G.nodes.filter(n => n.lock_status === 'frozen' || n.lock_status === 'partially_frozen');
-  if (frozenNodes.length === 0) {
-    alert('No files are currently frozen.');
-    return;
-  }
-  const frozenIds = frozenNodes.map(n => n.id);
-  pathSet = new Set(frozenIds);
-  applyPathStyle(frozenIds);
-}
-
-async function clearAllFrozenFiles() {
-  if (!G) return;
-  const frozenNodes = G.nodes.filter(n => n.lock_status === 'frozen' || n.lock_status === 'partially_frozen');
-  if (frozenNodes.length === 0) {
-    alert('No files are currently frozen.');
-    return;
-  }
-  const frozenIds = frozenNodes.map(n => n.id);
+async function freezeFile(filePath) {
   try {
-    await fetch('/api/ledger/unlock_batch', {
+    const res = await fetch('/api/ledger/lock', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ file_paths: frozenIds })
+      body: JSON.stringify({ file_path: filePath, reason: 'Frozen via TokenGuard UI' })
     });
-    await refreshGraphState();
+    if (res.ok) {
+      await refreshAll();
+      if (selectedNode && (selectedNode.id === filePath || selectedNode.id.endsWith(filePath))) {
+        selectedNode.lock_status = 'frozen';
+        selectFileNode(selectedNode);
+      }
+    }
   } catch (err) {
-    console.error('Error clearing frozen files:', err);
+    console.error('Failed to freeze file:', err);
   }
 }
 
-function toggleImpactFilter(el) {
-  impactFilterActive = !impactFilterActive;
-  const badge = document.getElementById('impact-badge-lbl');
-  if (badge) {
-    badge.textContent = impactFilterActive ? 'ON' : 'OFF';
-    badge.style.background = impactFilterActive ? 'rgba(251,191,36,0.35)' : 'rgba(251,191,36,0.15)';
-    badge.style.color = impactFilterActive ? '#fbbf24' : 'inherit';
-  }
-  applyFilter();
-}
-
-function filterByTreeFolder(folderName, el) {
-  if (el) {
-    document.querySelectorAll('.tree-item').forEach(item => item.classList.remove('active'));
-    el.classList.add('active');
-  }
-  folderFlt = folderName;
-  const pill = document.querySelector(`.filter-pill[data-folder="${folderName}"]`);
-  if (pill) {
-    document.querySelectorAll('#folder-filters .filter-pill').forEach(p=>p.classList.remove('active'));
-    pill.classList.add('active');
-  }
-  applyFilter();
-}
-
-function toggleTraceAccordion() {
-  const body = document.getElementById('trace-acc-body');
-  const arrow = document.getElementById('trace-acc-arrow');
-  if (!body) return;
-  const isHidden = body.style.display === 'none';
-  body.style.display = isHidden ? 'flex' : 'none';
-  if (arrow) arrow.textContent = isHidden ? '▲' : '▼';
-}
-
-function runTraceLinksDemo() {
-  if (!svgRoot || !G) return;
-  const traceNodes = G.nodes.filter(n => n.group === 'core' || n.group === 'api' || n.group === 'graph').map(n => n.id);
-  pathSet = new Set(traceNodes);
-  applyPathStyle(traceNodes);
-}
-
-function highlightTopHubInGraph() {
-  if (!G) return;
-  const topHub = (G.stats?.most_connected_file) || 'logger.py';
-  const targetNode = G.nodes.find(n => n.id === topHub || n.id.endsWith(topHub));
-  if (targetNode) {
-    highlightNode(targetNode.id);
+async function unfreezeFile(filePath) {
+  try {
+    const res = await fetch('/api/ledger/unlock', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file_path: filePath })
+    });
+    if (res.ok) {
+      await refreshAll();
+      if (selectedNode && (selectedNode.id === filePath || selectedNode.id.endsWith(filePath))) {
+        selectedNode.lock_status = 'unlocked';
+        selectFileNode(selectedNode);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to unfreeze file:', err);
   }
 }
 
-function showAllLinksOnCanvas() {
-  pathSet = new Set();
-  q = '';
-  folderFlt = 'all';
-  lockFlt = 'all';
-  impactFilterActive = false;
-  const badge = document.getElementById('impact-badge-lbl');
-  if (badge) {
-    badge.textContent = 'OFF';
-    badge.style.background = 'rgba(251,191,36,0.15)';
-  }
-  document.querySelectorAll('#folder-filters .filter-pill').forEach(p => p.classList.remove('active'));
-  const allPill = document.querySelector('#folder-filters .filter-pill[data-folder="all"]');
-  if (allPill) allPill.classList.add('active');
-  resetStyle();
-  applyFilter();
+// ═════════════════════════════════════════════════════════════════════════════
+//  SEARCH & FILTER
+// ═════════════════════════════════════════════════════════════════════════════
+function setupSearch() {
+  const searchInput = document.getElementById('search-input');
+  searchInput.addEventListener('input', (e) => {
+    const val = e.target.value.trim().toLowerCase();
+    searchQuery = val;
+    d3.selectAll('.node-group').each(function(d) {
+      const match = !val || d.id.toLowerCase().includes(val) || (d.functions || []).some(f => f.toLowerCase().includes(val));
+      d3.select(this).style('opacity', match ? 1 : 0.15);
+    });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      searchInput.focus();
+    }
+  });
 }
 
-// ── Start ──────────────────────────────────────────────────────
-init();
+// ═════════════════════════════════════════════════════════════════════════════
+//  TOOLTIP & HELPERS
+// ═════════════════════════════════════════════════════════════════════════════
+function showTooltip(e, d) {
+  const tip = document.getElementById('tooltip');
+  const statusBadge = d.is_changed ? '<span style="color:#10b981; font-weight:700;">⚡ MODIFIED</span>' : (d.lock_status === 'frozen' ? '<span style="color:#06b6d4; font-weight:700;">❄️ FROZEN</span>' : '<span style="color:#38bdf8;">SAFE</span>');
+  tip.innerHTML = `
+    <div style="font-weight:700; font-size:0.85rem; margin-bottom:4px;">${escapeHtml(d.label)}</div>
+    <div style="color:var(--text-muted); font-size:0.7rem; font-family:'JetBrains Mono',monospace; margin-bottom:6px;">${escapeHtml(d.id)}</div>
+    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+      <span>Status:</span> ${statusBadge}
+    </div>
+    <div style="display:flex; justify-content:space-between;">
+      <span>Connections:</span> <b style="color:#fff;">${d.imported_by_count} imported by</b>
+    </div>
+  `;
+  tip.style.left = `${e.pageX + 14}px`;
+  tip.style.top = `${e.pageY + 14}px`;
+  tip.style.display = 'block';
+}
+
+function hideTooltip() {
+  document.getElementById('tooltip').style.display = 'none';
+}
+
+function switchTab(tabName) {
+  document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(p => p.classList.remove('active'));
+
+  const btn = document.getElementById(`tab-btn-${tabName}`);
+  const panel = document.getElementById(`tab-panel-${tabName}`);
+  if (btn) btn.classList.add('active');
+  if (panel) panel.classList.add('active');
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 </script>
 </body>
 </html>

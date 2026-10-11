@@ -52,11 +52,50 @@ _active_project: Optional[str] = None
 def _resolve_project(project_path: Optional[str] = None) -> str:
     """Resolve and cache the active project path."""
     global _active_project
-    if project_path:
+    if project_path and project_path != ".":
         _active_project = str(Path(project_path).resolve())
     elif _active_project is None:
-        _active_project = str(PROJECT_ROOT)
+        cwd = Path.cwd()
+        if (cwd / "dependency_graph.json").exists():
+            _active_project = str(cwd.resolve())
+        else:
+            _active_project = str(PROJECT_ROOT)
     return _active_project
+
+
+def _log_session_action(
+    project_root: str,
+    action_type: str,
+    description: str,
+    file_path: str = "",
+    tokens_used: int = 0,
+    tokens_saved: int = 0,
+    original_tokens: int = 0,
+    compressed_tokens: int = 0,
+    reduction_percent: float = 0.0,
+    outcome: str = "success"
+):
+    """Record an action into the project's SessionManager for live UI reporting."""
+    try:
+        from sessions.session_manager import SessionManager
+        sm = SessionManager(project_root)
+        session = sm.store.get_active_session(project_root)
+        if not session:
+            session = sm.start_session(project_root, task_description="AI Agent Session")
+        sm.log_action(
+            session_id=session.session_id,
+            action_type=action_type,
+            file_path=file_path,
+            description=description,
+            tokens_used=tokens_used,
+            tokens_saved=tokens_saved,
+            original_tokens=original_tokens,
+            compressed_tokens=compressed_tokens,
+            reduction_percent=reduction_percent,
+            outcome=outcome,
+        )
+    except Exception as e:
+        logger.warning("Session logging error: %s", e)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -122,6 +161,13 @@ def scan_project(
     # Step 4 — Embed
     embed_count = embed_codebase(parsed, force_reset=force)
 
+    _log_session_action(
+        str(project_root),
+        action_type="scan",
+        description=f"Indexed {len(relative_files)} files ({graph.number_of_nodes()} nodes, {graph.number_of_edges()} edges)",
+        outcome="success"
+    )
+
     return json.dumps({
         "status": "success",
         "project": str(project_root),
@@ -172,6 +218,21 @@ def query_context(
     engine = QueryEngine(graph=graph)
     result = engine.query(task=task, top_k=top_k, graph_path=str(graph_file))
 
+    files_to_read = result.get("files_to_read", [])
+    first_file = files_to_read[0] if files_to_read else ""
+    saved = result.get("estimated_tokens_saved", 0)
+    _log_session_action(
+        str(project_root),
+        action_type="query",
+        description=f"Query context: {task}",
+        file_path=first_file,
+        tokens_saved=saved,
+        original_tokens=saved + 300,
+        compressed_tokens=300,
+        reduction_percent=round(saved / (saved + 300) * 100.0, 1) if saved else 0.0,
+        outcome="success"
+    )
+
     return json.dumps(result, indent=2)
 
 
@@ -211,6 +272,21 @@ def compress_context(
         task=task,
         max_input_tokens=max_input_tokens,
         max_output_tokens=max_output_tokens,
+    )
+
+    stats = context.token_stats
+    first_file = context.items[0].file_path if context.items else ""
+    _log_session_action(
+        project_root,
+        action_type="compress",
+        description=f"Compressed prompt: {task}",
+        file_path=first_file,
+        tokens_used=stats.compressed_input_tokens,
+        tokens_saved=stats.input_tokens_saved,
+        original_tokens=stats.original_input_tokens,
+        compressed_tokens=stats.compressed_input_tokens,
+        reduction_percent=stats.input_reduction_percent,
+        outcome="success"
     )
 
     return json.dumps(context.to_dict(), indent=2)
@@ -256,6 +332,13 @@ def lock_file(
 
     if success:
         feature = manager.state.locked_features.get(file_path.replace("\\", "/").lstrip("./"))
+        _log_session_action(
+            project_root,
+            action_type="lock",
+            description=f"Freeze file {file_path} ({reason})",
+            file_path=file_path,
+            outcome="locked"
+        )
         return json.dumps({
             "status": "locked",
             "file_path": file_path,
@@ -301,6 +384,15 @@ def unlock_file(
     funcs = [f.strip() for f in functions.split(",")] if functions else None
     success = manager.unlock_file(file_path, funcs)
 
+    if success:
+        _log_session_action(
+            project_root,
+            action_type="unlock",
+            description=f"Unfreeze file {file_path}",
+            file_path=file_path,
+            outcome="unlocked"
+        )
+
     return json.dumps({
         "status": "unlocked" if success else "error",
         "file_path": file_path,
@@ -342,6 +434,14 @@ def check_file(
     funcs = [f.strip() for f in proposed_functions.split(",")] if proposed_functions else None
     result = manager.check_file(file_path, funcs)
 
+    _log_session_action(
+        project_root,
+        action_type="check_file",
+        description=f"Pre-edit check for {file_path}: {'Allowed' if result.allowed else 'Blocked'}",
+        file_path=file_path,
+        outcome="allowed" if result.allowed else "blocked"
+    )
+
     return json.dumps({
         "allowed": result.allowed,
         "reason": result.reason,
@@ -349,6 +449,7 @@ def check_file(
         "safe_to_edit": result.safe_to_edit,
         "warning": result.warning,
     }, indent=2)
+
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -493,23 +594,49 @@ def find_dependency_path(
     if graph is None:
         return json.dumps({"status": "error", "message": "Failed to load graph."})
 
-    if source_file not in graph.nodes:
-        return json.dumps({"status": "error", "message": f"Source file '{source_file}' not in graph."})
-    if target_file not in graph.nodes:
-        return json.dumps({"status": "error", "message": f"Target file '{target_file}' not in graph."})
+    def _find_fuzzy(q: str):
+        if not q:
+            return None
+        if q in graph.nodes:
+            return q
+        std = q.replace("\\", "/").strip().lstrip("/")
+        if std in graph.nodes:
+            return std
+        lower = std.lower()
+        for node in graph.nodes:
+            ns = str(node).replace("\\", "/")
+            if ns.lower() == lower or ns.lower().endswith("/" + lower) or Path(node).name.lower() == lower:
+                return str(node)
+        return None
+
+    src = _find_fuzzy(source_file)
+    tgt = _find_fuzzy(target_file)
+
+    if not src:
+        return json.dumps({"status": "error", "message": f"Source file '{source_file}' not found in graph."})
+    if not tgt:
+        return json.dumps({"status": "error", "message": f"Target file '{target_file}' not found in graph."})
 
     try:
-        path = nx.shortest_path(graph, source=source_file, target=target_file)
-        return json.dumps({"status": "found", "path": path, "length": len(path), "directed": True}, indent=2)
+        path = nx.shortest_path(graph, source=src, target=tgt)
+        return json.dumps({"status": "found", "path": path, "length": len(path), "directed": True, "source": src, "target": tgt}, indent=2)
+    except nx.NetworkXNoPath:
+        pass
+
+    # Try reverse directed
+    try:
+        path_rev = nx.shortest_path(graph, source=tgt, target=src)
+        path = list(reversed(path_rev))
+        return json.dumps({"status": "found", "path": path, "length": len(path), "directed": False, "reverse": True, "source": src, "target": tgt}, indent=2)
     except nx.NetworkXNoPath:
         pass
 
     # Try undirected fallback
     try:
-        path = nx.shortest_path(graph.to_undirected(), source=source_file, target=target_file)
-        return json.dumps({"status": "found", "path": path, "length": len(path), "directed": False}, indent=2)
+        path = nx.shortest_path(graph.to_undirected(), source=src, target=tgt)
+        return json.dumps({"status": "found", "path": path, "length": len(path), "directed": False, "source": src, "target": tgt}, indent=2)
     except nx.NetworkXNoPath:
-        return json.dumps({"status": "no_path", "message": f"No dependency path between '{source_file}' and '{target_file}'."})
+        return json.dumps({"status": "no_path", "message": f"No dependency path between '{src}' and '{tgt}'."})
 
 
 # ═══════════════════════════════════════════════════════════════════════════

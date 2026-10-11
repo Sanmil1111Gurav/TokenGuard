@@ -43,3 +43,37 @@ def test_parse_file_integration():
         assert "UserValidator" in meta.classes
         assert "database" in meta.imports or "os" in meta.imports
         assert "validate user login details" in meta.summary.lower()
+
+
+def test_js_ts_import_parsing():
+    from core.parser import _parse_js_regex
+    code = """
+    import React, { useState } from 'react';
+    import { Button } from '@/components/ui/button';
+    import type { UserProps } from '@/types/user';
+    import './globals.css';
+    export * from './constants';
+    export { Header } from './Header';
+    const dynamicIcon = import('./icon');
+    const legacy = require('./legacy.js');
+
+    export function Navbar({ user }: UserProps) {
+        return <div>Navbar</div>;
+    }
+
+    export const Footer = () => <footer>Footer</footer>;
+    class ModalContainer {}
+    """
+    imports, functions, classes = _parse_js_regex(code)
+
+    assert "react" in imports
+    assert "@/components/ui/button" in imports
+    assert "@/types/user" in imports
+    assert "./globals.css" in imports
+    assert "./constants" in imports
+    assert "./Header" in imports
+    assert "./icon" in imports
+    assert "./legacy.js" in imports
+    assert "Navbar" in functions
+    assert "Footer" in functions
+    assert "ModalContainer" in classes

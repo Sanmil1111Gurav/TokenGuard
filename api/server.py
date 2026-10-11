@@ -79,6 +79,30 @@ async def get_graph(hide_isolated: bool = Query(False)) -> JSONResponse:
     return JSONResponse(content=data)
 
 
+def _find_node_fuzzy(graph: Any, query: str) -> Optional[str]:
+    """Find a node ID in graph by exact, normalized, suffix, or filename match."""
+    if not query:
+        return None
+    if query in graph.nodes:
+        return query
+
+    std_query = query.replace("\\", "/").strip().lstrip("/")
+    if std_query in graph.nodes:
+        return std_query
+
+    lower_query = std_query.lower()
+    for node in graph.nodes:
+        node_std = str(node).replace("\\", "/")
+        if node_std.lower() == lower_query:
+            return str(node)
+        if node_std.lower().endswith("/" + lower_query):
+            return str(node)
+        if Path(node).name.lower() == lower_query:
+            return str(node)
+
+    return None
+
+
 @app.get("/api/path")
 async def get_path(
     source: str = Query(..., alias="from"),
@@ -96,21 +120,72 @@ async def get_path(
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Failed to load graph: {exc}") from exc
 
-    if source not in G.nodes:
-        raise HTTPException(status_code=404, detail=f"Source node not found: {source}")
-    if target not in G.nodes:
-        raise HTTPException(status_code=404, detail=f"Target node not found: {target}")
+    src_node = _find_node_fuzzy(G, source)
+    tgt_node = _find_node_fuzzy(G, target)
 
+    if not src_node:
+        return JSONResponse(content={"path": [], "length": 0, "error": f"Source file '{source}' not found in graph."})
+    if not tgt_node:
+        return JSONResponse(content={"path": [], "length": 0, "error": f"Target file '{target}' not found in graph."})
+
+    if src_node == tgt_node:
+        return JSONResponse(content={
+            "path": [src_node],
+            "length": 1,
+            "directed": True,
+            "source": src_node,
+            "target": tgt_node,
+            "message": "Source and target are identical."
+        })
+
+    # 1. Directed shortest path (source imports target transitively)
     try:
-        path = nx.shortest_path(G, source=source, target=target)
-        return JSONResponse(content={"path": path, "length": len(path)})
-    except Exception:
-        # Try undirected fallback so the user sees SOME path
-        try:
-            path = nx.shortest_path(G.to_undirected(), source=source, target=target)
-            return JSONResponse(content={"path": path, "length": len(path), "undirected": True})
-        except Exception:
-            return JSONResponse(content={"path": [], "length": 0, "error": "No path found"})
+        path = nx.shortest_path(G, source=src_node, target=tgt_node)
+        return JSONResponse(content={
+            "path": path,
+            "length": len(path),
+            "directed": True,
+            "source": src_node,
+            "target": tgt_node,
+            "edges": [{"from": path[i], "to": path[i+1]} for i in range(len(path) - 1)]
+        })
+    except (nx.NetworkXNoPath, nx.NodeNotFound):
+        pass
+
+    # 2. Reverse directed shortest path (target imports source transitively)
+    try:
+        path_rev = nx.shortest_path(G, source=tgt_node, target=src_node)
+        path = list(reversed(path_rev))
+        return JSONResponse(content={
+            "path": path,
+            "length": len(path),
+            "directed": False,
+            "reverse_directed": True,
+            "source": src_node,
+            "target": tgt_node,
+            "edges": [{"from": path[i], "to": path[i+1]} for i in range(len(path) - 1)]
+        })
+    except (nx.NetworkXNoPath, nx.NodeNotFound):
+        pass
+
+    # 3. Undirected relationship fallback
+    try:
+        path = nx.shortest_path(G.to_undirected(), source=src_node, target=tgt_node)
+        return JSONResponse(content={
+            "path": path,
+            "length": len(path),
+            "directed": False,
+            "undirected": True,
+            "source": src_node,
+            "target": tgt_node,
+            "edges": [{"from": path[i], "to": path[i+1]} for i in range(len(path) - 1)]
+        })
+    except (nx.NetworkXNoPath, nx.NodeNotFound):
+        return JSONResponse(content={
+            "path": [],
+            "length": 0,
+            "error": f"No dependency path found between '{src_node}' and '{tgt_node}'."
+        })
 
 
 @app.get("/api/file")
@@ -274,7 +349,7 @@ class TaskExecuteRequest(BaseModel):
 
 @app.get("/api/session/active")
 async def api_get_active_session() -> JSONResponse:
-    """Return active session metrics, token savings history, and recent actions."""
+    """Return active session metrics, token savings history, changed files, and locked files."""
     manager = _get_session_manager()
     session = manager.store.get_active_session(str(_PROJECT_ROOT))
     if not session:
@@ -282,7 +357,41 @@ async def api_get_active_session() -> JSONResponse:
     
     summary = manager.get_session_summary(session.session_id)
     summary["session"] = session.to_dict()
+
+    # Detect git modified files in project
+    git_changed = []
+    try:
+        import subprocess
+        res = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=str(_PROJECT_ROOT),
+            capture_output=True,
+            text=True,
+            timeout=2
+        )
+        if res.returncode == 0:
+            for line in res.stdout.strip().splitlines():
+                parts = line.strip().split()
+                if len(parts) >= 2:
+                    git_changed.append(parts[-1].replace("\\", "/"))
+    except Exception:
+        pass
+
+    # Merge git changed files into summary["changed_files"]
+    existing_changed = set(summary.get("changed_files", []))
+    for f in git_changed:
+        if f not in existing_changed:
+            summary["changed_files"].append(f)
+
+    # Attach ledger locked files
+    ledger_mgr = _get_ledger_manager()
+    ledger_sum = ledger_mgr.get_ledger_summary()
+    summary["ledger"] = ledger_sum
+    summary["locked_files"] = ledger_sum.get("locked_files", [])
+    summary["total_locked"] = ledger_sum.get("total_locked_files", 0)
+
     return JSONResponse(content=summary)
+
 
 @app.post("/api/session/build_context")
 async def api_build_context(req: CompressRequest) -> JSONResponse:

@@ -223,6 +223,13 @@ def main():
 
     args = parser.parse_args()
 
+    # Persist active project path so MCP server and Visualizer always synchronize
+    try:
+        active_p = Path(args.project).resolve()
+        (PROJECT_ROOT / ".active_project").write_text(str(active_p), encoding="utf-8")
+    except Exception:
+        pass
+
     if args.install is not None:
         from install_plugin import main as run_install
         sys.argv = [sys.argv[0], args.install]

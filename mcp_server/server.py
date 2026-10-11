@@ -49,17 +49,54 @@ mcp = FastMCP(
 _active_project: Optional[str] = None
 
 
+ACTIVE_PROJECT_FILE = PROJECT_ROOT / ".active_project"
+
+
 def _resolve_project(project_path: Optional[str] = None) -> str:
-    """Resolve and cache the active project path."""
+    """Resolve and cache the active project path across CLI, MCP, and UI environments."""
     global _active_project
     if project_path and project_path != ".":
         _active_project = str(Path(project_path).resolve())
-    elif _active_project is None:
-        cwd = Path.cwd()
-        if (cwd / "dependency_graph.json").exists():
-            _active_project = str(cwd.resolve())
-        else:
-            _active_project = str(PROJECT_ROOT)
+        return _active_project
+
+    if _active_project and _active_project != str(PROJECT_ROOT):
+        return _active_project
+
+    # 1. Environment variable (e.g. set by install_plugin in mcp.json)
+    env_proj = os.getenv("TOKEN_GUARD_PROJECT")
+    if env_proj and Path(env_proj).exists():
+        _active_project = str(Path(env_proj).resolve())
+        return _active_project
+
+    # 2. Check sys.argv for --project <path>
+    if "--project" in sys.argv:
+        try:
+            idx = sys.argv.index("--project")
+            if idx + 1 < len(sys.argv):
+                cand = sys.argv[idx + 1]
+                if Path(cand).exists():
+                    _active_project = str(Path(cand).resolve())
+                    return _active_project
+        except Exception:
+            pass
+
+    # 3. Check .active_project file (persisted by main.py --project)
+    if ACTIVE_PROJECT_FILE.exists():
+        try:
+            content = ACTIVE_PROJECT_FILE.read_text(encoding="utf-8").strip()
+            if content and Path(content).exists():
+                _active_project = str(Path(content).resolve())
+                return _active_project
+        except Exception:
+            pass
+
+    # 4. Check current working directory if it contains project markers
+    cwd = Path.cwd()
+    if (cwd / "dependency_graph.json").exists() or (cwd / "package.json").exists() or (cwd / ".cursor").exists():
+        _active_project = str(cwd.resolve())
+        return _active_project
+
+    _active_project = str(PROJECT_ROOT)
     return _active_project
 
 

@@ -17,6 +17,7 @@ import json
 import shutil
 import argparse
 from pathlib import Path
+from typing import Optional
 
 # Ensure TokenGuard root is discoverable
 TOKEN_GUARD_ROOT = Path(__file__).resolve().parent
@@ -43,14 +44,21 @@ def format_path(p: Path) -> str:
     return str(p.resolve()).replace("\\", "/")
 
 
-def get_mcp_server_config() -> dict:
-    """Generate the standard TokenGuard MCP server entry."""
+def get_mcp_server_config(project_path: Optional[Path] = None) -> dict:
+    """Generate the standard TokenGuard MCP server entry with optional target project mapping."""
+    args = [format_path(SERVER_SCRIPT)]
+    env = {
+        "PYTHONPATH": format_path(TOKEN_GUARD_ROOT)
+    }
+    if project_path:
+        p_str = format_path(project_path)
+        args.extend(["--project", p_str])
+        env["TOKEN_GUARD_PROJECT"] = p_str
+
     return {
         "command": format_path(VENV_PYTHON),
-        "args": [format_path(SERVER_SCRIPT)],
-        "env": {
-            "PYTHONPATH": format_path(TOKEN_GUARD_ROOT)
-        }
+        "args": args,
+        "env": env
     }
 
 
@@ -228,13 +236,14 @@ def install_workspace_antigravity(target_dir: Path, server_config: dict):
     (plugin_dir / "rules" / "tokenguard_protection.md").write_text(RULE_CONTENT, encoding="utf-8")
 
 
-CURSOR_RULES_CONTENT = """# TokenGuard AI Context Guidelines
+CURSOR_RULES_CONTENT = """# TokenGuard AI Context & Protection Rules
 
-TokenGuard is active in this project to minimize LLM token usage and protect critical files.
+TokenGuard is actively managing token efficiency and code safety for this project.
 
-1. **Context Minimization**: Before reading multiple files or exploring the codebase, call the MCP tool `query_context(task="...")` to retrieve the minimal relevant files. Only open files returned by TokenGuard.
-2. **Prompt Compression**: If large context is needed, use `compress_context(task="...", max_input_tokens=4000)` to receive an outline-compressed prompt.
-3. **Pre-Edit Safety Guard**: Before modifying or overwriting any code, always call `check_file(file_path="...")`. If the file or function is marked as locked (frozen), DO NOT edit it without user confirmation.
+1. **Context Minimization**: When asked to read files or implement features, ALWAYS call the `tokenguard` MCP tool `query_context(task="...")` first. Read ONLY the minimal relevant files returned.
+2. **Prompt Compression**: Use `compress_context(task="...")` to receive outline-compressed context for large tasks.
+3. **Pre-Edit Safety Check**: Before modifying or overwriting any file, ALWAYS call `check_file(file_path="...")`. If the file is locked/frozen, STOP and alert the user.
+4. **Summary**: Always mention how many tokens TokenGuard saved in your final response.
 """
 
 
@@ -242,7 +251,8 @@ def install_workspace_cursor(target_dir: Path, server_config: dict):
     """Install TokenGuard in target workspace for Cursor (.cursor/mcp.json & .cursorrules)."""
     cursor_dir = target_dir / ".cursor"
     mcp_file = cursor_dir / "mcp.json"
-    merge_json_config(mcp_file, "tokenguard", server_config)
+    ws_config = get_mcp_server_config(target_dir)
+    merge_json_config(mcp_file, "tokenguard", ws_config)
 
     # Install .cursorrules for automated agent guidance
     rules_file = target_dir / ".cursorrules"

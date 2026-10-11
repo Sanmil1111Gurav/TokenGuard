@@ -78,3 +78,27 @@ def test_fuzzy_node_matching():
     assert _find_node_fuzzy(G, "button.tsx") == "components/ui/button.tsx"
     # Non-existent
     assert _find_node_fuzzy(G, "non_existent.py") is None
+
+
+def test_dynamic_untracked_injection():
+    import json
+    from pathlib import Path
+    from visualizer.graph_processor import process_graph
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_dir_p = Path(temp_dir)
+        graph_p = temp_dir_p / "dependency_graph.json"
+        graph_data = {
+            "nodes": [{"id": "app/page.tsx", "language": "typescript", "functions": [], "classes": [], "imports": []}],
+            "edges": []
+        }
+        graph_p.write_text(json.dumps(graph_data), encoding="utf-8")
+
+        # Create a new untracked dummy file
+        dummy_file = temp_dir_p / "test_dummy.tsx"
+        dummy_file.write_text("export const Test = () => <div>Hello</div>;", encoding="utf-8")
+
+        processed = process_graph(str(graph_p))
+        assert "nodes" in processed
+        assert len(processed["nodes"]) >= 1
+

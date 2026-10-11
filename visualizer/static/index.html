@@ -738,9 +738,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   setupSearch();
   await refreshAll();
 
-  // Live Auto-Refresh every 4 seconds
+  // Live Auto-Refresh every 4 seconds for session actions and graph updates
   setInterval(async () => {
     await fetchSessionData();
+    await fetchGraphData();
   }, 4000);
 });
 
@@ -825,15 +826,17 @@ function resetZoom() {
   );
 }
 
+let lastGraphFingerprint = '';
+
 // ═════════════════════════════════════════════════════════════════════════════
 //  DATA FETCHING & REFRESH
 // ═════════════════════════════════════════════════════════════════════════════
 async function refreshAll() {
-  await Promise.all([fetchGraphData(), fetchSessionData()]);
+  await Promise.all([fetchGraphData(true), fetchSessionData()]);
 }
 
 async function manualRefresh() {
-  await refreshAll();
+  await Promise.all([fetchGraphData(true), fetchSessionData()]);
   const btn = document.querySelector('button[title*="Sync live"]');
   if (btn) {
     btn.textContent = '✓ Updated';
@@ -841,14 +844,24 @@ async function manualRefresh() {
   }
 }
 
-async function fetchGraphData() {
+async function fetchGraphData(forceRender = false) {
   try {
     const res = await fetch('/api/graph');
     if (!res.ok) return;
     graphData = await res.json();
     populateFilesDatalist();
-    renderGraph();
     updateHeaderStats();
+
+    // Compute node fingerprint to only re-render when nodes or modified status change
+    const currentFingerprint = (graphData.nodes || [])
+      .map(n => `${n.id}:${n.is_changed ? 1 : 0}:${n.lock_status}`)
+      .sort()
+      .join('|');
+
+    if (forceRender || currentFingerprint !== lastGraphFingerprint) {
+      lastGraphFingerprint = currentFingerprint;
+      renderGraph();
+    }
   } catch (err) {
     console.error('Failed to fetch graph data:', err);
   }

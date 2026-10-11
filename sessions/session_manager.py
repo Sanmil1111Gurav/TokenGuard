@@ -56,16 +56,12 @@ class SessionStore:
 
     def get_active_session(self, project_root: str) -> Optional[Session]:
         norm_root = str(Path(project_root).resolve()).lower()
-        for r, s in self._active_sessions.items():
-            if r.lower() == norm_root:
-                return s
         
-        # Check disk for latest session file
+        # Check disk first for the latest session file so external process writes appear immediately
         session_files = sorted(self.storage_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
         for sf in session_files:
             try:
                 data = json.loads(sf.read_text(encoding="utf-8"))
-                # Match root or accept session stored in this project's folder
                 p = str(Path(data.get("project_root", "")).resolve()).lower()
                 if p == norm_root or sf.parent == self.storage_dir:
                     session = Session.from_dict(data)
@@ -73,26 +69,37 @@ class SessionStore:
                     return session
             except Exception:
                 pass
+
+        # In-memory fallback
+        for r, s in self._active_sessions.items():
+            if r.lower() == norm_root:
+                return s
+
         return None
 
-
     def save_session(self, session: Session):
-        norm_root = str(Path(session.project_root).resolve())
+        norm_root = str(Path(session.project_root).resolve()).lower()
         self._active_sessions[norm_root] = session
         file_path = self.storage_dir / f"{session.session_id}.json"
         file_path.write_text(json.dumps(session.to_dict(), indent=2), encoding="utf-8")
 
     def get_session(self, session_id: str) -> Optional[Session]:
-        for session in self._active_sessions.values():
-            if session.session_id == session_id:
-                return session
+        # Always check disk first to ensure fresh actions written by external processes are returned
         file_path = self.storage_dir / f"{session_id}.json"
         if file_path.exists():
             try:
                 data = json.loads(file_path.read_text(encoding="utf-8"))
-                return Session.from_dict(data)
+                session = Session.from_dict(data)
+                norm_root = str(Path(session.project_root).resolve()).lower()
+                self._active_sessions[norm_root] = session
+                return session
             except Exception:
                 pass
+
+        for session in self._active_sessions.values():
+            if session.session_id == session_id:
+                return session
+
         return None
 
 

@@ -16,6 +16,7 @@ chroma_db/
 
 # ── Generated graph data (re-generated on each scan) ─────────────
 dependency_graph.json
+.active_project
 
 # ── Python cache ──────────────────────────────────────────────────
 __pycache__/

@@ -360,6 +360,10 @@ async def api_get_active_session() -> JSONResponse:
 
     # Detect git modified files in project
     git_changed = []
+    ignored_prefixes = (
+        ".git", ".cursor", ".agents", "sessions", "dependency_graph.json",
+        ".active_project", ".cursorrules", ".gitignore", "node_modules", ".next", "dist", "build", ".venv"
+    )
     try:
         import subprocess
         res = subprocess.run(
@@ -371,9 +375,18 @@ async def api_get_active_session() -> JSONResponse:
         )
         if res.returncode == 0:
             for line in res.stdout.strip().splitlines():
-                parts = line.strip().split()
-                if len(parts) >= 2:
-                    git_changed.append(parts[-1].replace("\\", "/"))
+                if len(line) < 3:
+                    continue
+                raw_path = line[3:].strip().strip('"').replace("\\", "/")
+                if raw_path.endswith("/"):
+                    continue
+                if any(raw_path.startswith(p) for p in ignored_prefixes):
+                    continue
+                if raw_path in ignored_prefixes:
+                    continue
+                abs_f = _PROJECT_ROOT / raw_path
+                if abs_f.is_file():
+                    git_changed.append(raw_path)
     except Exception:
         pass
 

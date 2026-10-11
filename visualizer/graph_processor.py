@@ -98,6 +98,10 @@ def process_graph(graph_path: str, hide_isolated: bool = False) -> dict[str, Any
 
     # Detect changed files in project from git or session actions
     changed_set: set[str] = set()
+    ignored_prefixes = (
+        ".git", ".cursor", ".agents", "sessions", "dependency_graph.json",
+        ".active_project", ".cursorrules", ".gitignore", "node_modules", ".next", "dist", "build", ".venv"
+    )
     try:
         import subprocess
         res = subprocess.run(
@@ -109,9 +113,18 @@ def process_graph(graph_path: str, hide_isolated: bool = False) -> dict[str, Any
         )
         if res.returncode == 0:
             for line in res.stdout.strip().splitlines():
-                parts = line.strip().split()
-                if len(parts) >= 2:
-                    changed_set.add(parts[-1].replace("\\", "/").lstrip("./"))
+                if len(line) < 3:
+                    continue
+                raw_path = line[3:].strip().strip('"').replace("\\", "/")
+                if raw_path.endswith("/"):
+                    continue
+                if any(raw_path.startswith(p) for p in ignored_prefixes):
+                    continue
+                if raw_path in ignored_prefixes:
+                    continue
+                abs_f = Path(project_root) / raw_path
+                if abs_f.is_file():
+                    changed_set.add(raw_path)
     except Exception:
         pass
 
@@ -121,7 +134,9 @@ def process_graph(graph_path: str, hide_isolated: bool = False) -> dict[str, Any
         if sess:
             for a in sess.actions:
                 if a.file_path:
-                    changed_set.add(a.file_path.replace("\\", "/").lstrip("./"))
+                    fp = a.file_path.replace("\\", "/").strip().lstrip("./")
+                    if not any(fp.startswith(p) for p in ignored_prefixes):
+                        changed_set.add(fp)
     except Exception:
         pass
 
@@ -181,6 +196,30 @@ def process_graph(graph_path: str, hide_isolated: bool = False) -> dict[str, Any
         if ibc > most_connected_count:
             most_connected_count = ibc
             most_connected_file = node_id
+
+    # Dynamically inject newly created/untracked files so they appear live in graph
+    existing_ids = {n["id"] for n in d3_nodes}
+    for cf in changed_set:
+        if cf not in existing_ids and not any(n["id"].endswith(cf) for n in d3_nodes):
+            d3_nodes.append({
+                "id": cf,
+                "label": Path(cf).name,
+                "language": _language(cf),
+                "functions": [],
+                "classes": [],
+                "imports": [],
+                "imports_count": 0,
+                "imported_by": [],
+                "imported_by_count": 0,
+                "size": 8,
+                "group": _first_folder(cf),
+                "summary": "Newly modified / created file",
+                "is_isolated": True,
+                "is_changed": True,
+                "lock_status": "unlocked",
+                "locked_functions": [],
+            })
+            existing_ids.add(cf)
 
     # ---- Transform edges --------------------------------------------------
     valid_ids = {n["id"] for n in d3_nodes}

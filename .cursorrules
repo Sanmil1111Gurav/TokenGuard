@@ -1,0 +1,7 @@
+# TokenGuard AI Context Guidelines
+
+TokenGuard is active in this project to minimize LLM token usage and protect critical files.
+
+1. **Context Minimization**: Before reading multiple files or exploring the codebase, call the MCP tool `query_context(task="...")` to retrieve the minimal relevant files. Only open files returned by TokenGuard.
+2. **Prompt Compression**: If large context is needed, use `compress_context(task="...", max_input_tokens=4000)` to receive an outline-compressed prompt.
+3. **Pre-Edit Safety Guard**: Before modifying or overwriting any code, always call `check_file(file_path="...")`. If the file or function is marked as locked (frozen), DO NOT edit it without user confirmation.

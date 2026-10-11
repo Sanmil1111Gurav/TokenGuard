@@ -228,11 +228,25 @@ def install_workspace_antigravity(target_dir: Path, server_config: dict):
     (plugin_dir / "rules" / "tokenguard_protection.md").write_text(RULE_CONTENT, encoding="utf-8")
 
 
+CURSOR_RULES_CONTENT = """# TokenGuard AI Context Guidelines
+
+TokenGuard is active in this project to minimize LLM token usage and protect critical files.
+
+1. **Context Minimization**: Before reading multiple files or exploring the codebase, call the MCP tool `query_context(task="...")` to retrieve the minimal relevant files. Only open files returned by TokenGuard.
+2. **Prompt Compression**: If large context is needed, use `compress_context(task="...", max_input_tokens=4000)` to receive an outline-compressed prompt.
+3. **Pre-Edit Safety Guard**: Before modifying or overwriting any code, always call `check_file(file_path="...")`. If the file or function is marked as locked (frozen), DO NOT edit it without user confirmation.
+"""
+
+
 def install_workspace_cursor(target_dir: Path, server_config: dict):
-    """Install TokenGuard in target workspace for Cursor (.cursor/mcp.json)."""
+    """Install TokenGuard in target workspace for Cursor (.cursor/mcp.json & .cursorrules)."""
     cursor_dir = target_dir / ".cursor"
     mcp_file = cursor_dir / "mcp.json"
     merge_json_config(mcp_file, "tokenguard", server_config)
+
+    # Install .cursorrules for automated agent guidance
+    rules_file = target_dir / ".cursorrules"
+    rules_file.write_text(CURSOR_RULES_CONTENT, encoding="utf-8")
 
 
 def main():

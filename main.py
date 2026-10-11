@@ -155,6 +155,19 @@ def run_query_demo(query_text: str, project_path: str, compress: bool = True, ma
     console.print(JSON(json.dumps(result, indent=2)))
 
 
+def _find_available_port(host: str, start_port: int, max_attempts: int = 10) -> int:
+    """Find a free port starting from start_port."""
+    import socket
+    for p in range(start_port, start_port + max_attempts):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind((host, p))
+                return p
+            except OSError:
+                continue
+    return start_port
+
+
 def launch_visualizer(graph_file: Path, host: str = "127.0.0.1", port: int = 8000, hide_isolated: bool = False) -> None:
     """
     Start the FastAPI visualizer server and open the browser.
@@ -174,6 +187,11 @@ def launch_visualizer(graph_file: Path, host: str = "127.0.0.1", port: int = 800
     except ImportError as exc:
         console.print(f"[bold red]Import error:[/bold red] {exc}\nInstall with: pip install fastapi uvicorn")
         sys.exit(1)
+
+    active_port = _find_available_port(host, port)
+    if active_port != port:
+        console.print(f"[bold yellow]Notice:[/bold yellow] Port {port} is occupied; automatically using free port [bold cyan]{active_port}[/bold cyan].")
+    port = active_port
 
     url = f"http://{host}:{port}"
     console.print(Panel(

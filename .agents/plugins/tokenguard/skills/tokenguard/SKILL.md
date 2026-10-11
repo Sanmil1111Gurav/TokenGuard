@@ -13,7 +13,7 @@ This skill allows the agent to interact with TokenGuard's MCP tools to drastical
 If the project hasn't been indexed yet (or if files have changed significantly), call:
 ```json
 {
-  "tool": "scan_project",
+  "tool": "mcp_tokenguard_scan_project",
   "args": {
     "project_path": "."
   }
@@ -22,36 +22,36 @@ If the project hasn't been indexed yet (or if files have changed significantly),
 This builds `dependency_graph.json` and populates the vector store with embeddings.
 
 ### 2. Intelligent Context Retrieval
-Instead of inspecting every directory or guessing files, retrieve the exact minimal subgraph for a task:
+Instead of reading every file or dumping huge directories into prompt context, retrieve the minimal 3–5 file subgraph for a task:
 ```json
 {
-  "tool": "query_context",
+  "tool": "mcp_tokenguard_query_context",
   "args": {
-    "task": "fix authentication token expiration error",
+    "task": "describe your coding task here",
     "top_k": 5
   }
 }
 ```
-This returns the exact files to read, saving up to 90% in token costs.
+This returns the exact minimal files to read, saving up to 90% tokens.
 
 ### 3. Prompt Compression
 To build a budget-capped prompt with AST code outline compression:
 ```json
 {
-  "tool": "compress_context",
+  "tool": "mcp_tokenguard_compress_context",
   "args": {
-    "task": "refactor database migration",
+    "task": "your coding task",
     "max_input_tokens": 4000
   }
 }
 ```
 
 ### 4. Edit Protection (Ledger)
-- **Lock a file/function:**
-  `lock_file(file_path="core/parser.py", reason="Stable AST parser", functions="parse_file")`
 - **Check safety before editing:**
-  `check_file(file_path="core/parser.py")`
+  `mcp_tokenguard_check_file(file_path="relative/path/to/file")`
+- **Lock a critical file/function:**
+  `mcp_tokenguard_lock_file(file_path="relative/path/to/file", reason="Critical stable code")`
 - **Unlock when necessary:**
-  `unlock_file(file_path="core/parser.py")`
+  `mcp_tokenguard_unlock_file(file_path="relative/path/to/file")`
 - **Verify SHA-256 integrity:**
-  `verify_integrity()`
+  `mcp_tokenguard_verify_integrity()`

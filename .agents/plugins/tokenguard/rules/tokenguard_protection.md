@@ -6,7 +6,7 @@ always_on: true
 
 # TokenGuard AI Agent Guidelines
 
-TokenGuard is active in this workspace to minimize token usage and protect critical files.
+TokenGuard is active in this workspace to minimize token consumption and protect critical files.
 
 ## 1. Context Minimization
 - Before reading entire directories or pasting full codebases into your context, use `mcp_tokenguard_query_context` or `mcp_tokenguard_compress_context` with your task description.

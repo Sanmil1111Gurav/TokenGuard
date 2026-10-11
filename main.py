@@ -218,8 +218,16 @@ def main():
     parser.add_argument("--check", type=str, help="Check if a file is safe to edit")
     parser.add_argument("--verify", action="store_true", help="Verify integrity of locked files")
     parser.add_argument("--history", action="store_true", help="Show full change history")
+    # ── Plugin Installer ──
+    parser.add_argument("--install", nargs="?", const=".", default=None, help="Install TokenGuard as MCP plugin for Antigravity & Cursor (optional target directory)")
 
     args = parser.parse_args()
+
+    if args.install is not None:
+        from install_plugin import main as run_install
+        sys.argv = [sys.argv[0], args.install]
+        run_install()
+        return
 
     # ── Integrated AI Edit Workflow ───────────────────────────────────────
     if args.edit_task and args.target_file:
@@ -344,6 +352,7 @@ def main():
             "  • [yellow]python main.py --query \"<task>\"[/yellow]    Query codebase for relevant files & token savings\n"
             "  • [yellow]python main.py --query \"<task>\" --compress[/yellow] Run Token Compression on task query\n"
             "  • [yellow]python main.py --ledger[/yellow]              List all locked code features\n"
+            "  • [yellow]python main.py --install [dir][/yellow]       Install TokenGuard MCP plugin into Antigravity & Cursor\n"
             "  • [yellow]python main.py --force[/yellow]               Force full re-scan and re-embedding",
             expand=False
         ))
